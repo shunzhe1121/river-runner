@@ -1,0 +1,60 @@
+package com.riverrunner
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.riverrunner.i18n.LocalStrings
+import com.riverrunner.ui.AppViewModel
+import com.riverrunner.ui.HistoryScreen
+import com.riverrunner.ui.HomeScreen
+import com.riverrunner.ui.LocalPot
+import com.riverrunner.ui.Palette
+import com.riverrunner.ui.ReplayScreen
+import com.riverrunner.ui.ResultScreen
+import com.riverrunner.ui.Screen
+import com.riverrunner.ui.SettingsScreen
+import com.riverrunner.ui.StatsScreen
+import com.riverrunner.ui.TableScreen
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+        setContent {
+            val vm: AppViewModel = viewModel()
+            MaterialTheme(colorScheme = darkColorScheme(primary = Palette.Gold, background = Palette.Bg, surface = Palette.Panel)) {
+                CompositionLocalProvider(LocalStrings provides vm.strings, LocalPot provides vm.strings.pot) {
+                    Box(Modifier.fillMaxSize().background(Palette.Bg).windowInsetsPadding(WindowInsets.displayCutout)) {
+                        when (val s = vm.screen) {
+                            Screen.Home -> HomeScreen(vm)
+                            Screen.Table -> TableScreen(vm)
+                            is Screen.Result -> ResultScreen(vm, s.summary)
+                            Screen.History -> HistoryScreen(vm)
+                            is Screen.Replay -> ReplayScreen(vm, s.record)
+                            Screen.Stats -> StatsScreen(vm)
+                            Screen.Settings -> SettingsScreen(vm)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
