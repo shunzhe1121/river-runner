@@ -67,6 +67,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.window.DialogProperties
 import com.riverrunner.engine.Cards
 import com.riverrunner.engine.LegalActions
@@ -92,14 +96,14 @@ fun TableScreen(vm: AppViewModel) {
         onFastForward = { vm.fastForward = true },
         onPractice = { vm.practice = it },
         onExit = { confirmExit = true },
-        onHelp = { showGuide = true },
+        onHelp = { showGuide = true; vm.guideOpenedInGame() },
         onSound = { vm.setSound(!vm.soundOn) },
     )
     if (confirmExit) {
         AlertDialog(
             onDismissRequest = { confirmExit = false },
-            confirmButton = { TextButton({ confirmExit = false; vm.requestQuit() }) { Text(st.confirm) } },
-            dismissButton = { TextButton({ confirmExit = false }) { Text(st.cancel) } },
+            confirmButton = { TextButton({ confirmExit = false; vm.requestQuit() }) { Text(st.leaveTable, color = Palette.Red) } },
+            dismissButton = { TextButton({ confirmExit = false }) { Text(st.keepPlaying) } },
             title = { Text(st.exitConfirmTitle) },
             text = { Text(st.exitConfirmText) },
         )
@@ -141,7 +145,7 @@ fun TableContent(
                 exit = fadeOut(tween(400)),
             ) {
                 Text(
-                    ui.notice ?: "", color = Color(0xFF1A1405), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    ui.notice ?: "", color = Palette.Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center, lineHeight = 18.sp,
                     modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Palette.Gold)
                         .border(2.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
@@ -170,22 +174,22 @@ private fun SidePanel(
     val glow = if (heroTurn) pulse() else 0f
     Column(
         Modifier.width(212.dp).fillMaxHeight().background(Palette.Panel)
-            .border(if (heroTurn) 2.dp else 0.dp, Palette.Gold.copy(alpha = 0.25f + 0.5f * glow), RoundedCornerShape(0.dp))
+            .border(if (heroTurn) 2.dp else 0.dp, Palette.Accent.copy(alpha = 0.25f + 0.6f * glow), RoundedCornerShape(0.dp))
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         // header
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(st.handNo(ui.handNumber), color = Palette.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(ui.blindsText, color = Palette.TextDim, fontSize = 10.sp, maxLines = 1)
-                if (ui.levelText != null) Text(ui.levelText, color = Palette.Gold.copy(alpha = 0.85f), fontSize = 10.sp, maxLines = 1)
+                Text(st.handNo(ui.handNumber), color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(ui.blindsText, color = Palette.TextDim, fontSize = 11.sp, maxLines = 1)
+                if (ui.levelText != null) Text(ui.levelText, color = Palette.Accent, fontSize = 11.sp, maxLines = 1)
             }
-            RoundIcon(if (ui.soundOn) "🔊" else "🔇", onSound)
+            RoundIcon(if (ui.soundOn) "🔊" else "🔇", st.sound, onSound)
             Spacer(Modifier.width(4.dp))
-            RoundIcon("?", onHelp)
+            RoundIcon("?", st.guide, onHelp)
             Spacer(Modifier.width(4.dp))
-            RoundIcon("✕", onExit)
+            RoundIcon("✕", st.exit, onExit)
         }
         // practice switch
         Row(
@@ -195,7 +199,7 @@ private fun SidePanel(
             Text(st.practice, color = Palette.Text, fontSize = 12.sp, modifier = Modifier.weight(1f))
             Switch(
                 checked = ui.practice, onCheckedChange = onPractice, modifier = Modifier.scale(0.62f),
-                colors = SwitchDefaults.colors(checkedTrackColor = Palette.GoldDim, checkedThumbColor = Palette.Gold, uncheckedTrackColor = Palette.PanelHi2),
+                colors = SwitchDefaults.colors(checkedTrackColor = Palette.AccentDim, checkedThumbColor = Palette.Accent, uncheckedTrackColor = Palette.PanelHi2),
             )
         }
         // middle: results, or practice info + action log
@@ -245,19 +249,19 @@ private fun pulse(): Float {
 }
 
 @Composable
-private fun RoundIcon(text: String, onClick: () -> Unit) {
+private fun RoundIcon(text: String, label: String, onClick: () -> Unit) {
     Box(
-        Modifier.size(26.dp).pressable(onClick = onClick).clip(CircleShape).background(Palette.PanelHi),
+        Modifier.size(34.dp).pressable(onClick = onClick).clip(CircleShape).background(Palette.PanelHi)
+            .semantics { contentDescription = label; role = Role.Button },
         contentAlignment = Alignment.Center,
-    ) { Text(text, color = Palette.Text, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+    ) { Text(text, color = Palette.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
 }
 
 @Composable
 private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
     val st = LocalStrings.current
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFF1B2A3A))
-            .border(1.dp, Palette.Blue.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.PanelHi)
             .padding(horizontal = 8.dp, vertical = 5.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -266,7 +270,7 @@ private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
             HudRow(st.potOdds, "1 : %.1f".format(info.pot.toDouble() / info.toCall), st.needEquity, Format.pct(info.potOdds))
         }
         HudRow(st.spr, "%.1f".format(info.spr), null, null)
-        Text("${st.yourHand}: ${info.handText}", color = Color(0xFFBFD8F2), fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text("${st.yourHand}: ${info.handText}", color = Palette.Accent, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -274,14 +278,14 @@ private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
 private fun HudRow(l1: String, v1: String, l2: String?, v2: String?) {
     Row(Modifier.fillMaxWidth()) {
         Row(Modifier.weight(1f)) {
-            Text(l1, color = Palette.TextDim, fontSize = 10.sp, lineHeight = 14.sp, modifier = Modifier.weight(1f), maxLines = 1)
-            Text(v1, color = Palette.Text, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(l1, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 16.sp, modifier = Modifier.weight(1f), maxLines = 1)
+            Text(v1, color = Palette.Text, fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f)) {
             if (l2 != null && v2 != null) {
-                Text(l2, color = Palette.TextDim, fontSize = 10.sp, lineHeight = 14.sp, modifier = Modifier.weight(1f), maxLines = 1)
-                Text(v2, color = Palette.Text, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(l2, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 16.sp, modifier = Modifier.weight(1f), maxLines = 1)
+                Text(v2, color = Palette.Text, fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
     }
@@ -295,27 +299,27 @@ fun ActionLog(lines: List<LogLine>, modifier: Modifier = Modifier, highlightInde
         if (target >= 0) state.animateScrollToItem(target)
     }
     LazyColumn(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFF101814)).padding(horizontal = 6.dp, vertical = 3.dp),
+        modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.Bg).padding(horizontal = 6.dp, vertical = 3.dp),
         state = state,
     ) {
         itemsIndexed(lines) { i, l ->
             val hl = i == highlightIndex
             val mod = Modifier.fillMaxWidth()
-                .then(if (hl) Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.GoldDim.copy(alpha = 0.35f)) else Modifier)
+                .then(if (hl) Modifier.clip(RoundedCornerShape(4.dp)).background(Palette.AccentDim.copy(alpha = 0.6f)) else Modifier)
                 .then(if (onClick != null) Modifier.pressable { onClick(i) } else Modifier)
                 .padding(vertical = 1.dp)
             when (l.kind) {
                 LogKind.STREET -> Text(
                     buildAnnotatedString {
-                        withStyle(SpanStyle(color = Palette.Gold, fontWeight = FontWeight.Bold)) { append("— ${l.text} ") }
+                        withStyle(SpanStyle(color = Palette.TextDim, fontWeight = FontWeight.Bold)) { append("${l.text}  ") }
                         for (c in l.cards) {
                             withStyle(SpanStyle(color = logSuitColor(c), fontWeight = FontWeight.Bold)) { append(rankText(c) + suitText(c) + " ") }
                         }
                     },
-                    fontSize = 11.sp, modifier = mod.padding(top = 2.dp),
+                    fontSize = 12.sp, modifier = mod.padding(top = 4.dp),
                 )
-                LogKind.ACTION -> Text(l.text, color = if (hl) Palette.Gold else Palette.Text, fontSize = 11.sp, maxLines = 2, modifier = mod)
-                LogKind.RESULT -> Text(l.text, color = Palette.Green, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = mod)
+                LogKind.ACTION -> Text(l.text, color = if (hl) Palette.Accent else Palette.Text, fontSize = 12.sp, maxLines = 2, modifier = mod)
+                LogKind.RESULT -> Text(l.text, color = Palette.Green, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = mod)
             }
         }
     }
@@ -329,17 +333,17 @@ private fun logSuitColor(card: Int) = when (Cards.suit(card)) {
 private fun HandOverPanel(over: HandOverUi, fmt: (Int) -> String) {
     val st = LocalStrings.current
     Column(
-        Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)).background(Color(0xFF101814)).padding(8.dp)
+        Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)).background(Palette.Bg).padding(8.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(st.handResult, color = Palette.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(st.handResult, color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             val net = over.heroNet
             Text(
                 (if (net > 0) "+" else if (net < 0) "−" else "") + fmt(kotlin.math.abs(net)),
                 color = if (net > 0) Palette.Green else if (net < 0) Palette.Red else Palette.TextDim,
-                fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                fontSize = 17.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold,
             )
         }
         for (w in over.winners) {
@@ -351,7 +355,7 @@ private fun HandOverPanel(over: HandOverUi, fmt: (Int) -> String) {
             for (s in over.showdown) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        s.name, color = if (s.won > 0) Palette.Gold else Palette.Text, fontSize = 11.sp,
+                        s.name, color = if (s.won > 0) Palette.Green else Palette.Text, fontSize = 12.sp,
                         fontWeight = if (s.won > 0) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
                         modifier = Modifier.width(52.dp),
                     )
@@ -359,7 +363,7 @@ private fun HandOverPanel(over: HandOverUi, fmt: (Int) -> String) {
                     Spacer(Modifier.width(2.dp))
                     PlayingCard(s.cards[1], 18.dp)
                     Spacer(Modifier.width(6.dp))
-                    Text(s.handName, color = if (s.won > 0) Palette.Gold else Palette.TextDim, fontSize = 11.sp, maxLines = 1)
+                    Text(s.handName, color = if (s.won > 0) Palette.Green else Palette.TextDim, fontSize = 12.sp, maxLines = 1)
                 }
             }
         }
@@ -379,7 +383,7 @@ private fun WaitingBar(ui: TableScreenUi, onFastForward: () -> Unit) {
         }
         ActionButton(
             (if (ui.heroInHand) st.fastForward else st.skipHand) + "  ⏩",
-            if (ui.fastForward) Palette.GoldDim else Palette.PanelHi2,
+            if (ui.fastForward) Palette.AccentDim else Palette.PanelHi2,
             modifier = Modifier.fillMaxWidth().height(40.dp), onClick = onFastForward,
         )
     }
@@ -392,7 +396,7 @@ private fun ThinkingDots() {
     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         for (i in 0 until 3) {
             val on = p.toInt() == i
-            Box(Modifier.size(5.dp).clip(CircleShape).background(if (on) Palette.Gold else Palette.PanelHi2))
+            Box(Modifier.size(5.dp).clip(CircleShape).background(if (on) Palette.Accent else Palette.PanelHi2))
         }
     }
 }
@@ -434,19 +438,20 @@ private fun HeroControls(la: LegalActions, fmt: (Int) -> String, bb: Int, onMove
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val p = pulse()
-            Box(Modifier.size(8.dp).clip(CircleShape).background(Palette.Gold.copy(alpha = 0.4f + 0.6f * p)))
+            Box(Modifier.size(8.dp).clip(CircleShape).background(Palette.Accent.copy(alpha = 0.4f + 0.6f * p)))
             Spacer(Modifier.width(6.dp))
-            Text(st.yourTurn, color = Palette.Gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(st.yourTurn, color = Palette.Accent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         if (la.canRaise) {
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.fillMaxWidth()) {
                 for ((label, v) in presets(st, la, bb)) {
                     val sel = v == target
                     Box(
-                        Modifier.weight(1f).height(26.dp).pressable { target = v }.clip(RoundedCornerShape(6.dp))
-                            .background(if (sel) Palette.GoldDim else Palette.PanelHi),
+                        Modifier.weight(1f).height(32.dp).pressable { target = v }.clip(RoundedCornerShape(6.dp))
+                            .background(if (sel) Palette.AccentDim else Palette.PanelHi)
+                            .then(if (sel) Modifier.border(1.dp, Palette.Accent, RoundedCornerShape(6.dp)) else Modifier),
                         contentAlignment = Alignment.Center,
-                    ) { Text(label, color = Palette.Text, fontSize = 10.sp, maxLines = 1, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal) }
+                    ) { Text(label, color = Palette.Text, fontSize = 11.sp, maxLines = 1, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal) }
                 }
             }
             if (la.maxRaiseTo > la.minRaiseTo) {
@@ -506,7 +511,7 @@ private fun defaultTarget(la: LegalActions, bb: Int): Int {
 @Composable
 private fun StepButton(text: String, onClick: () -> Unit) {
     Box(
-        Modifier.size(26.dp).pressable(onClick = onClick).clip(RoundedCornerShape(6.dp)).background(Palette.PanelHi),
+        Modifier.size(34.dp).pressable(onClick = onClick).clip(RoundedCornerShape(6.dp)).background(Palette.PanelHi),
         contentAlignment = Alignment.Center,
     ) { Text(text, color = Palette.Text, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
 }
@@ -515,7 +520,7 @@ private fun StepButton(text: String, onClick: () -> Unit) {
 private fun BetSlider(fraction: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
     val cb by rememberUpdatedState(onChange)
     Box(
-        modifier.height(26.dp)
+        modifier.height(34.dp)
             .pointerInput(Unit) { detectTapGestures { cb((it.x / size.width).coerceIn(0f, 1f)) } }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { change, _ -> cb((change.position.x / size.width).coerceIn(0f, 1f)) }
@@ -530,9 +535,9 @@ private fun BetSlider(fraction: Float, onChange: (Float) -> Unit, modifier: Modi
             val right = size.width - r
             drawRoundRect(Palette.PanelHi2, Offset(left, y - trackH / 2), Size(right - left, trackH), CornerRadius(trackH / 2))
             val x = left + (right - left) * f
-            drawRoundRect(Palette.Gold, Offset(left, y - trackH / 2), Size(x - left, trackH), CornerRadius(trackH / 2))
+            drawRoundRect(Palette.Accent, Offset(left, y - trackH / 2), Size(x - left, trackH), CornerRadius(trackH / 2))
             drawCircle(Color.White, r + 2.dp.toPx(), Offset(x, y))
-            drawCircle(Palette.Gold, r, Offset(x, y))
+            drawCircle(Palette.Accent, r, Offset(x, y))
         }
     }
 }

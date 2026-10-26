@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,27 +41,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.riverrunner.engine.Cards
 
+/**
+ * Colour tokens. Rule: Gold = chips and money only; Accent (river cyan) = you, selection and
+ * anything interactive; Green/Red = results and the call/fold actions. See DESIGN.md.
+ */
 object Palette {
-    val Bg = Color(0xFF0B1210)
-    val Panel = Color(0xFF141E19)
-    val PanelHi = Color(0xFF1F2C25)
-    val PanelHi2 = Color(0xFF2A3A31)
-    val FeltCenter = Color(0xFF1C6B45)
-    val FeltEdge = Color(0xFF0D3A25)
-    val Rail = Color(0xFF2B1D12)
-    val RailHi = Color(0xFF4A3220)
-    val Gold = Color(0xFFE9B949)
-    val GoldDim = Color(0xFF8F7130)
-    val Text = Color(0xFFEFF2EC)
-    val TextDim = Color(0xFF9AA59E)
-    val Red = Color(0xFFE0605A)
-    val Green = Color(0xFF55C189)
+    val Bg = Color(0xFF0C141C)        // ink
+    val Panel = Color(0xFF142231)     // slate
+    val PanelHi = Color(0xFF1C2E40)   // raised slate
+    val PanelHi2 = Color(0xFF27405A)  // tracks, inactive controls
+    val Line = Color(0xFF3D6080)      // outlines that must read as a control
+    val FeltCenter = Color(0xFF137A72) // river teal
+    val FeltEdge = Color(0xFF09393A)
+    val Rail = Color(0xFF1E140D)      // walnut
+    val RailHi = Color(0xFF4A3322)
+    val Gold = Color(0xFFE3B04B)      // brass: money only
+    val GoldDim = Color(0xFF8A6A2C)
+    val Accent = Color(0xFF46D3E6)    // river cyan: you / interactive
+    val AccentDim = Color(0xFF1E5C6B)
+    val Text = Color(0xFFEAF0F4)      // chalk
+    val TextDim = Color(0xFF9FB2C3)   // mist
+    val Red = Color(0xFFF06A63)
+    val Green = Color(0xFF3FCB86)
     val Blue = Color(0xFF5B9BE6)
-    val FoldBtn = Color(0xFF6B2F2B)
-    val CallBtn = Color(0xFF226546)
-    val RaiseBtn = Color(0xFFA77B1E)
-    val AllInBtn = Color(0xFF9A3322)
+    val FoldBtn = Color(0xFFB23B35)
+    val CallBtn = Color(0xFF1C7A51)
+    val RaiseBtn = Color(0xFFE08A2E)
+    val AllInBtn = Color(0xFFA82C22)
+    val Ink = Color(0xFF0C141C)
 }
+
+/** Condensed numerals for chip amounts and scores (Barlow Condensed, SIL OFL). */
+val Numeric = androidx.compose.ui.text.font.FontFamily(
+    androidx.compose.ui.text.font.Font(com.riverrunner.R.font.barlow_condensed_semibold, FontWeight.SemiBold),
+    androidx.compose.ui.text.font.Font(com.riverrunner.R.font.barlow_condensed_bold, FontWeight.Bold),
+)
 
 fun actColor(k: ActKind?): Color = when (k) {
     ActKind.FOLD -> Color(0xFF5A615D)
@@ -143,7 +159,7 @@ fun ChipLabel(text: String, modifier: Modifier = Modifier, color: Color = Palett
     ) {
         Box(Modifier.size(11.dp).clip(CircleShape).background(color).border(2.dp, Color.White.copy(alpha = 0.85f), CircleShape))
         Spacer(Modifier.width(4.dp))
-        Text(text, color = Palette.Text, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text(text, color = Palette.Text, fontSize = 13.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -159,12 +175,12 @@ fun Modifier.pressable(enabled: Boolean = true, onClick: () -> Unit): Modifier {
 @Composable
 fun Pill(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
-        modifier.pressable(onClick = onClick).clip(RoundedCornerShape(50))
-            .background(if (selected) Palette.Gold else Palette.PanelHi)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier.pressable(onClick = onClick).heightIn(min = 40.dp).clip(RoundedCornerShape(50))
+            .background(if (selected) Palette.Accent else Palette.PanelHi)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = if (selected) Color(0xFF1A1405) else Palette.Text, fontSize = 13.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+        Text(text, color = if (selected) Palette.Ink else Palette.Text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
     }
 }
 
@@ -175,6 +191,7 @@ fun ActionButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     sub: String? = null,
+    textColor: Color = Palette.Text,
     onClick: () -> Unit,
 ) {
     Box(
@@ -188,8 +205,8 @@ fun ActionButton(
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text, color = if (enabled) Palette.Text else Palette.TextDim, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
-            if (sub != null) Text(sub, color = Palette.Text.copy(alpha = 0.9f), fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(text, color = if (enabled) textColor else Palette.TextDim, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
+            if (sub != null) Text(sub, color = Palette.Text.copy(alpha = 0.92f), fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
@@ -199,16 +216,16 @@ private fun lerpDark(c: Color) = Color(c.red * 0.72f, c.green * 0.72f, c.blue * 
 @Composable
 fun SmallButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, highlight: Boolean = false) {
     Box(
-        modifier.pressable(onClick = onClick).clip(RoundedCornerShape(8.dp))
-            .background(if (highlight) Palette.GoldDim else Palette.PanelHi)
+        modifier.pressable(onClick = onClick).heightIn(min = 40.dp).widthIn(min = 40.dp).clip(RoundedCornerShape(8.dp))
+            .background(if (highlight) Palette.AccentDim else Palette.PanelHi)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = Palette.Text, fontSize = 12.sp, maxLines = 1)
+        Text(text, color = Palette.Text, fontSize = 13.sp, maxLines = 1)
     }
 }
 
 @Composable
 fun SectionTitle(text: String) {
-    Text(text, color = Palette.Gold, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
+    Text(text, color = Palette.Text, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
 }

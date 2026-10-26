@@ -256,3 +256,82 @@ class SessionTest {
         assertEquals(8, sum.standings.size)
     }
 }
+
+class AchievementTest {
+    private fun hand(n: Int, button: Int, holes: List<String>, board: String, stacks: List<Int>? = null, moves: List<Move>): HandRecord {
+        val e = HandEngine(
+            HandSetup(50, 100, 0, button, (0 until n).map { SeatSetup(it, "P$it", (stacks?.get(it) ?: 100) * 100) }),
+            PresetCardSource(holes.mapIndexed { i, h -> i to Cards.parseMany(h) }.toMap(), Cards.parseMany(board)),
+        )
+        for (m in moves) {
+            while (e.phase == Phase.STREET_DONE) e.dealNextStreet()
+            e.apply(m)
+        }
+        while (e.phase != Phase.HAND_DONE) {
+            if (e.phase == Phase.STREET_DONE) e.dealNextStreet()
+            else e.apply(if (e.legalActions().canCheck) Move.CHECK else Move.CALL)
+        }
+        return HandRecord.from(e, GameMode.CASH, 1, 0, n, emptyMap())
+    }
+
+    @Test fun stealFromButton() {
+        // 6 players, button = 0 (hero). Order: SB 1, BB 2, UTG 3, HJ 4, CO 5, BTN 0
+        val r = hand(6, 0, listOf("Kd9c", "2c3d", "4h5s", "7c2h", "8s3c", "Th4d"), "AsKs2d3h4c",
+            moves = listOf(Move.FOLD, Move.FOLD, Move.FOLD, Move.raiseTo(250), Move.FOLD, Move.FOLD))
+        val d = Facts.forHand(r)
+        assertEquals(1L, d[Progress.STEALS])
+        assertEquals(1L, d[Progress.POTS_WON])
+        assertEquals(null, d[Progress.SHOWDOWN_WINS])
+    }
+
+    @Test fun noStealFromUtg() {
+        val r = hand(6, 0, listOf("Kd9c", "2c3d", "4h5s", "AcAh", "8s3c", "Th4d"), "AsKs2d3h4c",
+            moves = listOf(Move.raiseTo(250), Move.FOLD, Move.FOLD, Move.FOLD, Move.FOLD, Move.FOLD))
+        assertEquals(null, Facts.forHand(r)[Progress.STEALS])
+    }
+
+    @Test fun riverBluff() {
+        // heads-up: hero button (seat 0) with air bets the river and villain folds
+        val r = hand(2, 0, listOf("7c6d", "QhJh"), "As9s2d3hKc",
+            moves = listOf(Move.CALL, Move.CHECK, Move.CHECK, Move.CHECK, Move.CHECK, Move.CHECK, Move.CHECK, Move.raiseTo(300), Move.FOLD))
+        val d = Facts.forHand(r)
+        assertEquals(1L, d[Progress.RIVER_BLUFFS])
+    }
+
+    @Test fun fullHouseShowdownAndBigWin() {
+        val r = hand(2, 0, listOf("KhKd", "AsQs"), "KsAcAd7h2c",
+            moves = listOf(Move.raiseTo(10000), Move.CALL))
+        val d = Facts.forHand(r)
+        assertEquals(1L, d[Progress.SHOWDOWN_WINS])
+        assertEquals(1L, d[Progress.WON_FULL_HOUSE])
+        assertEquals(1L, d[Progress.ALLIN_WINS])
+        assertEquals(100L, d[Progress.MAX_WIN_BB])
+    }
+
+    @Test fun suckoutAndHammer() {
+        // hero 7-2 offsuit all-in preflop vs AA, wins on the board
+        val r = hand(2, 0, listOf("7c2d", "AsAh"), "7h7s2c9dKc",
+            moves = listOf(Move.raiseTo(10000), Move.CALL))
+        val d = Facts.forHand(r)
+        assertEquals(1L, d[Progress.SUCKOUTS])
+        assertEquals(1L, d[Progress.WON_72])
+        assertEquals(1L, Facts.forHand(hand(2, 0, listOf("AsAh", "7c2d"), "7h7s2c9dKc", moves = listOf(Move.FOLD)))[Progress.DEALT_AA])
+    }
+
+    @Test fun unlockingAndSessions() {
+        val counters = HashMap<String, Long>()
+        Progress.apply(counters, mapOf(Progress.HANDS to 1L, Progress.MAX_WIN_BB to 40L))
+        Progress.apply(counters, mapOf(Progress.HANDS to 1L, Progress.MAX_WIN_BB to 20L))
+        assertEquals(2L, counters[Progress.HANDS])
+        assertEquals(40L, counters[Progress.MAX_WIN_BB])
+        val ids = Achievements.newlyUnlocked(counters, setOf()).map { it.id }
+        assertEquals(listOf("first_hand"), ids)
+        assertEquals(0, Achievements.newlyUnlocked(counters, setOf("first_hand")).size)
+        val cfg = SessionConfig(GameMode.TOURNAMENT, 8, 50, TableType.GTO)
+        val sum = SessionSummary(GameMode.TOURNAMENT, emptyList(), 1, 300.0, 80, false)
+        val t = Facts.forSession(sum, cfg)
+        assertEquals(1L, t[Progress.TOURNEY_WINS]); assertEquals(1L, t[Progress.FULL_TABLE_TITLES]); assertEquals(1L, t[Progress.TOURNEY_ITM])
+        val ids2 = Achievements.all.map { it.id }
+        assertEquals(ids2.size, ids2.toSet().size)
+    }
+}

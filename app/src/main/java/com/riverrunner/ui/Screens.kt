@@ -45,6 +45,8 @@ import com.riverrunner.engine.HandRecord
 import com.riverrunner.engine.HeroStats
 import com.riverrunner.engine.SessionConfig
 import com.riverrunner.engine.Stats
+import com.riverrunner.engine.Progress
+import com.riverrunner.engine.Achievements
 import com.riverrunner.engine.TableType
 import com.riverrunner.i18n.LocalStrings
 import kotlinx.coroutines.Dispatchers
@@ -68,55 +70,63 @@ fun HomeScreen(vm: AppViewModel) {
     val stackOptions = if (mode == GameMode.CASH) listOf(50, 100, 150, 200) else listOf(20, 30, 50, 75, 100)
 
     Row(Modifier.fillMaxSize().background(Palette.Bg).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        Column(Modifier.width(210.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("♠ ${st.appName}", color = Palette.Gold, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-            Text(st.tagline, color = Palette.TextDim, fontSize = 13.sp)
-            Spacer(Modifier.height(4.dp))
-            Column(
-                Modifier.fillMaxWidth().pressable { vm.screen = Screen.Guide }.clip(RoundedCornerShape(10.dp))
-                    .background(Palette.GoldDim.copy(alpha = 0.35f))
-                    .border(1.dp, Palette.Gold.copy(alpha = 0.7f), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-            ) {
-                Text("📖 " + st.guide, color = Palette.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Text(st.guideSub, color = Palette.TextDim, fontSize = 11.sp)
+        Column(Modifier.width(300.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("River Runner", color = Palette.Text, fontSize = 30.sp, lineHeight = 30.sp, fontFamily = Numeric, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(10.dp))
+                Text(st.tagline, color = Palette.TextDim, fontSize = 12.sp, modifier = Modifier.padding(bottom = 3.dp))
             }
-            NavItem(st.history) { vm.screen = Screen.History }
-            NavItem(st.stats) { vm.screen = Screen.Stats }
-            NavItem(st.settings) { vm.screen = Screen.Settings }
+            PlayerCard(vm.profile, vm.profileList.size, vm.maxSlots, onSwitch = { vm.screen = Screen.Saves }, modifier = Modifier.fillMaxWidth())
+            val tiles = listOf(
+                st.guide to { vm.openGuide() },
+                st.achievements to { vm.screen = Screen.Achievements },
+                st.history to { vm.screen = Screen.History },
+                st.stats to { vm.screen = Screen.Stats },
+                st.saves to { vm.screen = Screen.Saves },
+                st.settings to { vm.screen = Screen.Settings },
+            )
+            tiles.chunked(2).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { (label, go) -> NavItem(label, Modifier.weight(1f), highlight = label == st.guide && vm.profile.counter(com.riverrunner.engine.Progress.HANDS) < 20, onClick = go) }
+                }
+            }
         }
         Column(
-            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(14.dp)).background(Palette.Panel).padding(14.dp),
+            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(Palette.Panel).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-          Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            OptionRow(st.mode) {
-                Pill(st.cash, mode == GameMode.CASH, { mode = GameMode.CASH; if (stackBB !in listOf(50, 100, 150, 200)) stackBB = 100 })
-                Pill(st.tournament, mode == GameMode.TOURNAMENT, { mode = GameMode.TOURNAMENT; if (stackBB !in listOf(20, 30, 50, 75, 100)) stackBB = 50 })
-            }
-            OptionRow(st.players) {
-                for (n in listOf(2, 5, 6, 7, 8)) Pill("$n", size == n, { size = n })
-            }
-            OptionRow(st.startingStack) {
-                for (b in stackOptions) Pill("$b BB", stackBB == b, { stackBB = b })
-            }
-            OptionRow(st.tableType) {
-                Pill(st.gtoTable, table == TableType.GTO, { table = TableType.GTO })
-                Pill(st.mixedTable, table == TableType.MIXED, { table = TableType.MIXED })
-            }
-            Text(if (table == TableType.GTO) st.gtoHint else st.mixedHint, color = Palette.TextDim, fontSize = 11.sp)
-            if (mode == GameMode.TOURNAMENT) {
-                OptionRow(st.handsPerLevel) {
-                    for (h in listOf(5, 8, 10, 15, 20)) Pill("$h", hpl == h, { hpl = h })
+            Text(st.newGame, color = Palette.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OptionRow(st.mode) {
+                    Pill(st.cash, mode == GameMode.CASH, { mode = GameMode.CASH; if (stackBB !in listOf(50, 100, 150, 200)) stackBB = 100 })
+                    Pill(st.tournament, mode == GameMode.TOURNAMENT, { mode = GameMode.TOURNAMENT; if (stackBB !in listOf(20, 30, 50, 75, 100)) stackBB = 50 })
                 }
-            } else {
-                OptionRow(st.ante) {
-                    Pill(st.none, !ante, { ante = false })
-                    Pill("12.5%", ante, { ante = true })
+                OptionRow(st.players) {
+                    for (n in listOf(2, 5, 6, 7, 8)) Pill("$n", size == n, { size = n })
+                }
+                OptionRow(st.startingStack) {
+                    for (b in stackOptions) Pill("$b BB", stackBB == b, { stackBB = b })
+                }
+                OptionRow(st.tableType) {
+                    Pill(st.gtoTable, table == TableType.GTO, { table = TableType.GTO })
+                    Pill(st.mixedTable, table == TableType.MIXED, { table = TableType.MIXED })
+                }
+                Text(
+                    if (table == TableType.GTO) st.gtoHint else st.mixedHint, color = Palette.TextDim, fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 96.dp),
+                )
+                if (mode == GameMode.TOURNAMENT) {
+                    OptionRow(st.handsPerLevel) {
+                        for (h in listOf(5, 8, 10, 15, 20)) Pill("$h", hpl == h, { hpl = h })
+                    }
+                } else {
+                    OptionRow(st.ante) {
+                        Pill(st.none, !ante, { ante = false })
+                        Pill("12.5%", ante, { ante = true })
+                    }
                 }
             }
-          }
-            ActionButton(st.start + "  ▶", Palette.RaiseBtn, modifier = Modifier.fillMaxWidth().height(46.dp)) {
+            ActionButton(st.start, Palette.Accent, textColor = Palette.Ink, modifier = Modifier.fillMaxWidth().height(50.dp)) {
                 p.lastMode = mode; p.lastSize = size; p.lastStackBB = stackBB
                 p.lastTableType = table; p.lastHandsPerLevel = hpl; p.lastAnte = ante
                 vm.startGame(
@@ -131,11 +141,14 @@ fun HomeScreen(vm: AppViewModel) {
 }
 
 @Composable
-private fun NavItem(text: String, onClick: () -> Unit) {
+private fun NavItem(text: String, modifier: Modifier, highlight: Boolean = false, onClick: () -> Unit) {
     Box(
-        Modifier.fillMaxWidth().pressable(onClick = onClick).clip(RoundedCornerShape(10.dp)).background(Palette.Panel)
-            .padding(horizontal = 14.dp, vertical = 11.dp),
-    ) { Text(text, color = Palette.Text, fontSize = 15.sp) }
+        modifier.pressable(onClick = onClick).height(46.dp).clip(RoundedCornerShape(10.dp))
+            .background(if (highlight) Palette.AccentDim else Palette.Panel)
+            .then(if (highlight) Modifier.border(1.dp, Palette.Accent, RoundedCornerShape(10.dp)) else Modifier)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) { Text(text, color = Palette.Text, fontSize = 15.sp, maxLines = 1) }
 }
 
 @Composable
@@ -181,11 +194,11 @@ fun ResultScreen(vm: AppViewModel, summary: com.riverrunner.engine.SessionSummar
             items(summary.standings) { s ->
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                        .background(if (s.isHuman) Palette.GoldDim.copy(alpha = 0.35f) else Palette.PanelHi)
+                        .background(if (s.isHuman) Palette.AccentDim else Palette.PanelHi)
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("#${s.place}", color = Palette.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(44.dp))
+                    Text("#${s.place}", color = Palette.Text, fontSize = 20.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, modifier = Modifier.width(44.dp))
                     Text(if (s.isHuman) st.you else s.name, color = Palette.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
                     Text(if (s.stack > 0) Format.amount(s.stack, 100, vm.showInBB && summary.mode == GameMode.CASH) else st.busted, color = Palette.TextDim, fontSize = 14.sp)
                 }
@@ -214,14 +227,16 @@ fun HistoryScreen(vm: AppViewModel) {
     Column(Modifier.fillMaxSize().background(Palette.Bg).padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SmallButton("← " + st.back, { vm.screen = Screen.Home })
-            Text(st.history, color = Palette.Gold, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(st.history, color = Palette.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
             Pill(st.all, !favOnly, { favOnly = false })
             Pill("★ " + st.favorites, favOnly, { favOnly = true })
         }
         Text(st.keepHandsNote, color = Palette.TextDim, fontSize = 11.sp, modifier = Modifier.padding(vertical = 6.dp))
         if (loaded && shown.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(st.noHands, color = Palette.TextDim) }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(st.noHandsHint, color = Palette.TextDim, fontSize = 14.sp, modifier = Modifier.width(360.dp))
+            }
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             items(shown, key = { it.id }) { r ->
@@ -229,7 +244,7 @@ fun HistoryScreen(vm: AppViewModel) {
                 val net = r.heroNet.toDouble() / r.bigBlind
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Palette.Panel)
-                        .clickable { vm.screen = Screen.Replay(r) }.padding(horizontal = 12.dp, vertical = 6.dp),
+                        .clickable { vm.openReplay(r) }.padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -278,11 +293,10 @@ fun StatsScreen(vm: AppViewModel) {
     LaunchedEffect(Unit) {
         stats = withContext(Dispatchers.Default) { Stats.compute(vm.history.all()) }
     }
-    val p = vm.prefs
     Column(Modifier.fillMaxSize().background(Palette.Bg).padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SmallButton("← " + st.back, { vm.screen = Screen.Home })
-            Text(st.stats, color = Palette.Gold, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(st.stats, color = Palette.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -318,13 +332,18 @@ fun StatsScreen(vm: AppViewModel) {
                 Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(12.dp)).background(Palette.Panel).padding(12.dp)
                     .verticalScroll(rememberScrollState()),
             ) {
-                SectionTitle(st.careerTitle)
-                StatLine(st.sessions, "${p.cashSessions}")
-                StatLine(st.cashProfitBB, "%.1f".format(p.cashProfitBB), p.cashProfitBB)
-                StatLine(st.tournamentsPlayed, "${p.tourneys}")
-                StatLine(st.tournamentWins, "${p.tourneyWins}")
-                StatLine(st.itm, "${p.tourneyItm}")
-                StatLine(st.tourneyPoints, "%.0f".format(p.tourneyProfit), p.tourneyProfit)
+                val pr = vm.profile
+                fun c(k: String) = pr.counter(k)
+                val cashBB = c(Progress.CASH_PROFIT_CENTI_BB) / 100.0
+                SectionTitle(st.careerTitleFor(pr.name))
+                StatLine(st.handsLabel, "%,d".format(c(Progress.HANDS)))
+                StatLine(st.sessions, "${c(Progress.CASH_SESSIONS)}")
+                StatLine(st.cashProfitBB, "%.1f".format(cashBB), cashBB)
+                StatLine(st.tournamentsPlayed, "${c(Progress.TOURNEYS)}")
+                StatLine(st.tournamentWins, "${c(Progress.TOURNEY_WINS)}")
+                StatLine(st.itm, "${c(Progress.TOURNEY_ITM)}")
+                StatLine(st.tourneyPoints, "${c(Progress.TOURNEY_POINTS)}", c(Progress.TOURNEY_POINTS).toDouble())
+                StatLine(st.achievements, "${pr.unlocked.size} / ${Achievements.all.size}")
             }
         }
     }
@@ -353,7 +372,7 @@ fun SettingsScreen(vm: AppViewModel) {
     Column(Modifier.fillMaxSize().background(Palette.Bg).padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SmallButton("← " + st.back, { vm.screen = Screen.Home })
-            Text(st.settings, color = Palette.Gold, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(st.settings, color = Palette.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -389,8 +408,8 @@ fun SettingsScreen(vm: AppViewModel) {
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            confirmButton = { TextButton({ confirmClear = false; vm.history.clearNonFavorites() }) { Text(st.confirm) } },
-            dismissButton = { TextButton({ confirmClear = false }) { Text(st.cancel) } },
+            confirmButton = { TextButton({ confirmClear = false; vm.history.clearNonFavorites() }) { Text(st.clearAction, color = Palette.Red) } },
+            dismissButton = { TextButton({ confirmClear = false }) { Text(st.keep) } },
             text = { Text(st.clearHistoryConfirm) },
         )
     }
@@ -402,7 +421,7 @@ private fun ToggleRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
         Text(label, color = Palette.Text, fontSize = 13.sp, modifier = Modifier.weight(1f))
         Switch(
             checked = checked, onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(checkedTrackColor = Palette.GoldDim, checkedThumbColor = Palette.Gold),
+            colors = SwitchDefaults.colors(checkedTrackColor = Palette.AccentDim, checkedThumbColor = Palette.Accent, uncheckedTrackColor = Palette.PanelHi2),
         )
     }
 }

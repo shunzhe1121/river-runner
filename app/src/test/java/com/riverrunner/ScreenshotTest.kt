@@ -239,6 +239,43 @@ class ScreenshotTest {
         }
     }
 
+    private fun sampleProfile(name: String, emblem: Int, hands: Long, cash: Long, wins: Long, unlocked: List<String>) =
+        com.riverrunner.data.Profile(
+            "id$name", name, 1_790_000_000_000L, emblem,
+            mapOf(
+                com.riverrunner.engine.Progress.HANDS to hands, com.riverrunner.engine.Progress.CASH_PROFIT_CENTI_BB to cash,
+                com.riverrunner.engine.Progress.TOURNEY_WINS to wins, com.riverrunner.engine.Progress.STEALS to 6,
+                com.riverrunner.engine.Progress.POTS_WON to 41, com.riverrunner.engine.Progress.SHOWDOWN_WINS to 17,
+            ),
+            unlocked.associateWith { 1_792_000_000_000L },
+        )
+
+    @Test fun t17_achievements() {
+        val p = sampleProfile("阿明", 0, 312, 4550, 1, listOf("first_hand", "first_pot", "hands_100", "pocket_aces", "first_title", "first_itm", "guide", "full_house", "allin_win"))
+        shot("17_achievements") { com.riverrunner.ui.AchievementsContent(p, onBack = {}) }
+    }
+
+    @Test fun t18_saves() {
+        val list = listOf(
+            sampleProfile("阿明", 0, 312, 4550, 1, listOf("first_hand", "first_pot", "hands_100", "pocket_aces", "first_title")),
+            sampleProfile("练习号", 1, 48, -1220, 0, listOf("first_hand", "guide")),
+            sampleProfile("锦标赛专用", 2, 1520, 0, 4, listOf("first_hand", "first_pot", "hands_100", "hands_1000", "first_title", "first_itm", "hu_champ")),
+        )
+        shot("18_saves") { com.riverrunner.ui.SavesContent(list, list[0].id, 6, "存档 4", {}, {}, {}, { _, _ -> }, {}) }
+    }
+
+    @Test fun t19_unlock_toast() {
+        val s = Scenario(ZH, 6, 5, listOf("Qh8s", "9c9d", "Kd4c", "7s2h", "AhJc", "Tc6d"), "Ks7d2c5hAs")
+        s.play(Move.FOLD, Move.FOLD, Move.raiseTo(250), Move.FOLD)
+        shot("19_unlock_toast") {
+            androidx.compose.foundation.layout.Box {
+                TableContent(s.ui(), { Format.amount(it, BB, true) }, {}, {}, {}, {}, {}, {}, animate = false)
+                com.riverrunner.ui.UnlockToast(com.riverrunner.engine.Achievements.byId("steal_10"),
+                    androidx.compose.ui.Modifier.align(androidx.compose.ui.Alignment.TopCenter))
+            }
+        }
+    }
+
     @Test fun t15_home() {
         val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
         shot("15_home") { HomeScreen(vm) }

@@ -10,6 +10,11 @@ import androidx.lifecycle.viewModelScope
 import com.riverrunner.audio.Sound
 import com.riverrunner.audio.SoundPlayer
 import com.riverrunner.data.HistoryStore
+import com.riverrunner.data.ProfileStore
+import com.riverrunner.engine.AchievementDef
+import com.riverrunner.engine.Achievements
+import com.riverrunner.engine.Facts
+import com.riverrunner.engine.Progress
 import com.riverrunner.data.Prefs
 import com.riverrunner.engine.Action
 import com.riverrunner.engine.ActionType
@@ -18,7 +23,6 @@ import com.riverrunner.engine.GameMode
 import com.riverrunner.engine.GameSession
 import com.riverrunner.engine.HandEngine
 import com.riverrunner.engine.HandRecord
-import com.riverrunner.engine.Icm
 import com.riverrunner.engine.LegalActions
 import com.riverrunner.engine.Move
 import com.riverrunner.engine.Phase
@@ -43,11 +47,99 @@ sealed class Screen {
     data object Stats : Screen()
     data object Settings : Screen()
     data object Guide : Screen()
+    data object Saves : Screen()
+    data object Achievements : Screen()
 }
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     val prefs = Prefs(app)
-    val history = HistoryStore(app)
+
+    // ------------------------------------------------------------------ save slots
+    private val profiles = ProfileStore(app.filesDir, prefs) { i -> (if (prefs.chinese) ZH else EN).saveDefaultName(i) }
+    var profile by mutableStateOf(profiles.active()); private set
+    var profileList by mutableStateOf(profiles.all()); private set
+    var history = HistoryStore(profiles.historyFile(profile.id)); private set
+
+    /** Achievement just unlocked, shown as a toast over any screen. */
+    var unlockToast by mutableStateOf<AchievementDef?>(null); private set
+    private val unlockQueue = ArrayDeque<AchievementDef>()
+    private var toastJob: Job? = null
+
+    fun switchProfile(id: String) {
+        if (session != null && screen == Screen.Table) return
+        profiles.activate(id)
+        profile = profiles.active()
+        history = HistoryStore(profiles.historyFile(profile.id))
+        profileList = profiles.all()
+    }
+
+    fun createProfile(name: String): Boolean {
+        if (profiles.all().size >= ProfileStore.MAX_SLOTS) return false
+        val p = profiles.create(name.trim().ifEmpty { profiles.nextDefaultName() })
+        switchProfile(p.id)
+        return true
+    }
+
+    fun renameProfile(id: String, name: String) {
+        if (name.isBlank()) return
+        profiles.rename(id, name.trim())
+        if (id == profile.id) profile = profiles.active()
+        profileList = profiles.all()
+    }
+
+    fun deleteProfile(id: String) {
+        profiles.delete(id)
+        switchProfile(profiles.active().id)
+    }
+
+    fun nextProfileName(): String = profiles.nextDefaultName()
+    val maxSlots: Int get() = ProfileStore.MAX_SLOTS
+
+    /** Adds counter increments to the active save slot and announces newly unlocked achievements. */
+    private fun record(delta: Map<String, Long>) {
+        if (delta.isEmpty()) return
+        val p = profiles.active()
+        val counters = HashMap(p.counters)
+        Progress.apply(counters, delta)
+        val fresh = Achievements.newlyUnlocked(counters, p.unlocked.keys)
+        val unlocked = HashMap(p.unlocked)
+        val now = System.currentTimeMillis()
+        fresh.forEach { unlocked[it.id] = now }
+        val updated = p.copy(counters = counters, unlocked = unlocked)
+        profiles.save(updated)
+        profile = updated
+        profileList = profiles.all()
+        if (fresh.isNotEmpty()) {
+            unlockQueue.addAll(fresh)
+            showNextUnlock()
+        }
+    }
+
+    private fun showNextUnlock() {
+        if (toastJob?.isActive == true) return
+        toastJob = viewModelScope.launch {
+            while (unlockQueue.isNotEmpty()) {
+                unlockToast = unlockQueue.removeFirst()
+                sound.play(Sound.UNLOCK, 0.8f, varyPitch = false)
+                delay(3200)
+                unlockToast = null
+                delay(350)
+            }
+        }
+    }
+
+    fun openGuide() {
+        record(mapOf(Progress.GUIDE_OPENED to 1L))
+        screen = Screen.Guide
+    }
+
+    /** Called when the in-game glossary is opened. */
+    fun guideOpenedInGame() = record(mapOf(Progress.GUIDE_OPENED to 1L))
+
+    fun openReplay(r: HandRecord) {
+        record(mapOf(Progress.REPLAYS to 1L))
+        screen = Screen.Replay(r)
+    }
 
     var screen by mutableStateOf<Screen>(Screen.Home)
     var strings by mutableStateOf(if (prefs.chinese) ZH else EN); private set
@@ -283,7 +375,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             actingName = null
             val infosBefore = seatInfos(s)
             val rec = s.completeHand(e)
-            withContext(Dispatchers.IO) { history.add(rec) }
+            val store = history
+            withContext(Dispatchers.IO) { store.add(rec) }
+            record(withContext(Dispatchers.Default) { runCatching { Facts.forHand(rec) }.getOrDefault(emptyMap()) })
             val bb = e.bigBlind
             val betsOut = e.players.any { it.streetBet > 0 }
             val wasFast = fastForward
@@ -307,14 +401,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         val summary = s.finish(early = quitRequested && !(s.alivePlayers.size <= 1 || !s.hero.alive))
-        prefs.recordSession(summary, Icm.payoutsFor(s.config.tableSize).size)
+        record(Facts.forSession(summary, s.config))
         table = null
         handOver = null
         screen = Screen.Result(summary)
     }
 
     // ------------------------------------------------------------------ history helpers
-    fun toggleFavorite(id: Long): HandRecord? = history.toggleFavorite(id)
+    fun toggleFavorite(id: Long): HandRecord? {
+        val r = history.toggleFavorite(id)
+        if (r?.favorite == true) record(mapOf(Progress.STARS to 1L))
+        return r
+    }
 
     fun actionLabel(a: Action, bb: Int): String = TableMapper.actionLabel(strings, a) { fmt(it, bb) }
 }
