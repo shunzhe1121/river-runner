@@ -96,6 +96,19 @@ object HandEvaluator {
         return (HIGH_CARD shl 20) or topN(all, 5)
     }
 
+    /** The five cards (out of 5..7) that make the best hand. */
+    fun bestFive(cards: IntArray): IntArray {
+        if (cards.size <= 5) return cards.copyOf()
+        val target = evaluate(cards)
+        val n = cards.size
+        for (a in 0 until n) for (b in a + 1 until n) for (c in b + 1 until n)
+            for (d in c + 1 until n) for (e in d + 1 until n) {
+                val five = intArrayOf(cards[a], cards[b], cards[c], cards[d], cards[e])
+                if (evaluate(five) == target) return five
+            }
+        return cards.copyOf(5)
+    }
+
     private fun highBit(m: Int): Int = 31 - Integer.numberOfLeadingZeros(m)
 
     /** Packs the top n ranks of mask into nibbles starting at bit 16 going down. */

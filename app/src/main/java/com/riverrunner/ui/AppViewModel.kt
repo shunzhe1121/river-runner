@@ -2,6 +2,7 @@ package com.riverrunner.ui
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -11,11 +12,9 @@ import com.riverrunner.data.Prefs
 import com.riverrunner.engine.Action
 import com.riverrunner.engine.ActionType
 import com.riverrunner.engine.Bot
-import com.riverrunner.engine.BlindLevel
 import com.riverrunner.engine.GameMode
 import com.riverrunner.engine.GameSession
 import com.riverrunner.engine.HandEngine
-import com.riverrunner.engine.HandEvaluator
 import com.riverrunner.engine.HandRecord
 import com.riverrunner.engine.Icm
 import com.riverrunner.engine.LegalActions
@@ -25,7 +24,6 @@ import com.riverrunner.engine.SessionConfig
 import com.riverrunner.engine.SessionSummary
 import com.riverrunner.engine.Street
 import com.riverrunner.i18n.EN
-import com.riverrunner.i18n.Strings
 import com.riverrunner.i18n.ZH
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +31,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 
 sealed class Screen {
     data object Home : Screen()
@@ -43,37 +40,8 @@ sealed class Screen {
     data class Replay(val record: HandRecord) : Screen()
     data object Stats : Screen()
     data object Settings : Screen()
+    data object Guide : Screen()
 }
-
-/** One seat as drawn on the table (live game or replay). */
-data class SeatView(
-    val seat: Int,
-    val name: String,
-    val stack: Int,
-    val streetBet: Int,
-    val folded: Boolean,
-    val allIn: Boolean,
-    val isHero: Boolean,
-    val isButton: Boolean,
-    val isActing: Boolean,
-    val hole: IntArray?,
-    val faceUp: Boolean,
-    val position: String,
-    val bubble: String?,
-    val won: Int,
-    val busted: Boolean,
-    val handName: String?,
-    val equity: Double? = null,
-)
-
-data class TableView(
-    val seats: List<SeatView>,
-    val board: List<Int>,
-    val pot: Int,
-    val bigBlind: Int,
-)
-
-data class PracticeInfo(val toCall: Int, val pot: Int, val potOdds: Double, val spr: Double)
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {
     val prefs = Prefs(app)
@@ -87,18 +55,27 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setShowBB(v: Boolean) { prefs.showInBB = v; showInBB = v }
 
     // ------------------------------------------------------------------ live game state
-    var table by mutableStateOf<TableView?>(null); private set
-    var heroLegal by mutableStateOf<LegalActions?>(null); private set
+    private var table by mutableStateOf<TableUi?>(null)
+    private var legal by mutableStateOf<LegalActions?>(null)
+    private var practiceInfo by mutableStateOf<PracticeInfo?>(null)
+    private var handNumber by mutableStateOf(0)
+    private var blindsText by mutableStateOf("")
+    private var levelText by mutableStateOf<String?>(null)
+    private var handOver by mutableStateOf<HandOverUi?>(null)
+    private var actingName by mutableStateOf<String?>(null)
+    private var heroInHand by mutableStateOf(true)
+    private var sessionOver by mutableStateOf(false)
+    private val log = mutableStateListOf<LogLine>()
     var practice by mutableStateOf(prefs.practiceDefault)
-    var practiceInfo by mutableStateOf<PracticeInfo?>(null); private set
-    var level by mutableStateOf<BlindLevel?>(null); private set
-    var handsToNextLevel by mutableStateOf<Int?>(null); private set
-    var handNumber by mutableStateOf(0); private set
-    var mode by mutableStateOf(GameMode.CASH); private set
-    var waitingNextHand by mutableStateOf(false); private set
-    var resultBanner by mutableStateOf<String?>(null); private set
     var fastForward by mutableStateOf(false)
-    var heroFoldedThisHand by mutableStateOf(false); private set
+
+    val tableScreen: TableScreenUi
+        get() = TableScreenUi(
+            table = table, handNumber = handNumber, blindsText = blindsText, levelText = levelText,
+            practice = practice, legal = legal, practiceInfo = practiceInfo, log = log.toList(),
+            handOver = handOver, actingName = actingName, heroInHand = heroInHand,
+            fastForward = fastForward, sessionOver = sessionOver,
+        )
 
     private var session: GameSession? = null
     private var lastConfig: SessionConfig? = null
@@ -106,18 +83,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private var heroMove: CompletableDeferred<Move>? = null
     private var nextHandSignal: CompletableDeferred<Unit>? = null
     private var quitRequested = false
-    private val bubbles = HashMap<Int, String>()
+    private var handKey = 0L
+    private var actionSeq = 0
 
-    private val botDelay: Long get() = when (prefs.speed) { 0 -> 1300L; 2 -> 380L; else -> 750L }
+    private val botDelay: Long get() = when (prefs.speed) { 0 -> 1500L; 2 -> 450L; else -> 900L }
 
     fun startGame(config: SessionConfig) {
         gameJob?.cancel()
         lastConfig = config
         val s = GameSession(config)
         session = s
-        mode = config.mode
         quitRequested = false
         practice = prefs.practiceDefault
+        sessionOver = false
+        table = null
         screen = Screen.Table
         gameJob = viewModelScope.launch { runGame(s) }
     }
@@ -127,13 +106,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         startGame(c.copy(seed = System.nanoTime()))
     }
 
-    fun heroAct(move: Move) {
-        heroMove?.complete(move)
-    }
+    fun heroAct(move: Move) { heroMove?.complete(move) }
 
-    fun continueToNextHand() {
-        nextHandSignal?.complete(Unit)
-    }
+    fun continueToNextHand() { nextHandSignal?.complete(Unit) }
 
     fun requestQuit() {
         quitRequested = true
@@ -142,192 +117,152 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         nextHandSignal?.complete(Unit)
     }
 
-    fun abandonToHome() {
-        gameJob?.cancel()
-        session = null
-        table = null
-        screen = Screen.Home
-    }
-
     private suspend fun pause(ms: Long) {
-        if (!fastForward) delay(ms)
-    }
-
-    private suspend fun runGame(s: GameSession) {
-        while (!s.isOver && !quitRequested) {
-            val e = s.startHand()
-            handNumber = s.handNumber + 1
-            level = s.currentLevel()
-            handsToNextLevel = if (s.config.mode == GameMode.TOURNAMENT)
-                s.config.handsPerLevel - (s.handNumber % s.config.handsPerLevel) else null
-            bubbles.clear()
-            resultBanner = null
-            heroFoldedThisHand = false
-            fastForward = false
-            publish(s, e)
-            pause(450)
-            while (e.phase != Phase.HAND_DONE) {
-                when (e.phase) {
-                    Phase.STREET_DONE -> {
-                        pause(if (e.isRunout) 900 else 500)
-                        e.dealNextStreet()
-                        bubbles.clear()
-                        publish(s, e)
-                    }
-                    Phase.BETTING -> {
-                        val seat = e.toAct
-                        if (seat == GameSession.HERO_SEAT) {
-                            if (quitRequested) {
-                                record(e, e.apply(Move.FOLD)); continue
-                            }
-                            fastForward = false
-                            val la = e.legalActions()
-                            heroLegal = la
-                            val me = e.player(seat)
-                            practiceInfo = PracticeInfo(
-                                la.toCall, la.pot,
-                                if (la.toCall > 0) la.toCall.toDouble() / (la.pot + la.toCall) else 0.0,
-                                me.stack.toDouble() / maxOf(1, la.pot),
-                            )
-                            publish(s, e)
-                            val d = CompletableDeferred<Move>()
-                            heroMove = d
-                            val move = d.await()
-                            heroMove = null
-                            heroLegal = null
-                            practiceInfo = null
-                            record(e, e.apply(move))
-                            if (move.type == com.riverrunner.engine.MoveType.FOLD && e.phase != Phase.HAND_DONE) heroFoldedThisHand = true
-                        } else {
-                            publish(s, e)
-                            pause(botDelay)
-                            val style = s.players[seat].style
-                            val ctx = s.tournamentContext()
-                            val move = withContext(Dispatchers.Default) {
-                                Bot.decide(e, seat, style, s.random, ctx).sample(s.random)
-                            }
-                            record(e, e.apply(move))
-                        }
-                        publish(s, e)
-                    }
-                    Phase.HAND_DONE -> {}
-                }
-            }
-            // ---- hand finished
-            val rec = s.completeHand(e)
-            withContext(Dispatchers.IO) { history.add(rec) }
-            val res = e.result!!
-            val showdown = res.showdown.toSet()
-            val names = e.players.associate { it.seat to if (it.seat == GameSession.HERO_SEAT) strings.you else it.name }
-            val winners = res.pots.flatMap { it.winners }.distinct()
-            val main = res.pots.firstOrNull()
-            resultBanner = buildString {
-                append(winners.joinToString(" / ") { names.getValue(it) })
-                append(' ')
-                append(if ((main?.winners?.size ?: 1) > 1) strings.split else strings.wins)
-                if (showdown.isNotEmpty() && main != null) {
-                    val sc = res.scores[main.winners.first()]
-                    if (sc != null) append(" · ").append(HandEvaluator.categoryName(sc, strings.isZh))
-                }
-            }
-            publish(s, e, final = true)
-            fastForward = false
-            if (!quitRequested) {
-                val sig = CompletableDeferred<Unit>()
-                nextHandSignal = sig
-                waitingNextHand = true
-                withTimeoutOrNull(if (showdown.isNotEmpty()) 4500L else 2200L) { sig.await() }
-                waitingNextHand = false
-                nextHandSignal = null
-            }
-        }
-        val summary = s.finish(early = quitRequested && !s.isOverNaturally())
-        prefs.recordSession(summary, Icm.payoutsFor(s.config.tableSize).size)
-        table = null
-        screen = Screen.Result(summary)
-    }
-
-    private fun GameSession.isOverNaturally(): Boolean = alivePlayers.size <= 1 || !hero.alive
-
-    private fun record(e: HandEngine, a: Action) {
-        bubbles[a.seat] = actionLabel(a, e.bigBlind)
-    }
-
-    fun actionLabel(a: Action, bb: Int): String {
-        val st = strings
-        return when (a.type) {
-            ActionType.FOLD -> st.fold
-            ActionType.CHECK -> st.check
-            ActionType.CALL -> if (a.allIn) st.allIn else "${st.call} ${fmt(a.streetTotal, bb)}"
-            ActionType.BET -> if (a.allIn) st.allIn else "${st.bet} ${fmt(a.streetTotal, bb)}"
-            ActionType.RAISE -> if (a.allIn) st.allIn else "${st.raise} ${fmt(a.streetTotal, bb)}"
-            ActionType.SMALL_BLIND -> "SB"
-            ActionType.BIG_BLIND -> "BB"
-            ActionType.ANTE -> st.ante
-        }
+        if (!fastForward && ms > 0) delay(ms)
     }
 
     /** Formats chips either as big blinds or as raw chips. */
     fun fmt(chips: Int, bb: Int): String = Format.amount(chips, bb, showInBB)
 
-    private fun publish(s: GameSession, e: HandEngine, final: Boolean = false) {
-        val res = e.result
-        val showdown = res?.showdown?.toSet() ?: emptySet()
-        val inHand = e.players.associateBy { it.seat }
-        val seats = s.players.map { sp ->
-            val p = inHand[sp.seat]
-            if (p == null) {
-                SeatView(sp.seat, displayName(sp.seat, sp.name), sp.stack, 0, true, false, sp.isHuman,
-                    false, false, null, false, "", null, 0, busted = true, handName = null)
-            } else {
-                val faceUp = sp.isHuman || (final && sp.seat in showdown)
-                val score = res?.scores?.get(sp.seat)
-                SeatView(
-                    seat = sp.seat,
-                    name = displayName(sp.seat, sp.name),
-                    stack = p.stack,
-                    streetBet = if (final) 0 else p.streetBet,
-                    folded = p.folded,
-                    allIn = p.allIn,
-                    isHero = sp.isHuman,
-                    isButton = sp.seat == e.buttonSeat,
-                    isActing = !final && e.phase == Phase.BETTING && e.toAct == sp.seat,
-                    hole = p.hole,
-                    faceUp = faceUp,
-                    position = e.positionName(sp.seat),
-                    bubble = if (final) null else bubbles[sp.seat],
-                    won = if (final) wonPots(res, sp.seat) else 0,
-                    busted = false,
-                    handName = if (final && score != null && sp.seat in showdown) HandEvaluator.categoryName(score, strings.isZh) else null,
-                )
+    private fun seatInfos(s: GameSession): List<SeatInfo> = s.players.map {
+        SeatInfo(it.seat, if (it.isHuman) strings.you else it.name, it.isHuman, it.stack, !it.alive && it.place > 0)
+    }
+
+    private fun publish(s: GameSession, e: HandEngine, stage: TableMapper.Stage, thinking: Long = 0) {
+        val bb = e.bigBlind
+        table = TableMapper.build(strings, e, seatInfos(s), handKey, actionSeq, stage, { fmt(it, bb) }, thinking)
+    }
+
+    private fun logAction(e: HandEngine, s: GameSession, a: Action) {
+        if (a.type == ActionType.ANTE) return
+        val name = if (a.seat == GameSession.HERO_SEAT) strings.you else s.players[a.seat].name
+        val bb = e.bigBlind
+        log += LogLine(LogKind.ACTION, "$name (${e.positionName(a.seat)}) ${TableMapper.actionLabel(strings, a) { fmt(it, bb) }}", a.seat)
+    }
+
+    private fun apply(e: HandEngine, s: GameSession, move: Move) {
+        val a = e.apply(move)
+        actionSeq++
+        logAction(e, s, a)
+    }
+
+    private fun updateBlinds(s: GameSession) {
+        val lvl = s.currentLevel()
+        blindsText = strings.blindsText(lvl.smallBlind, lvl.bigBlind, lvl.ante)
+        levelText = if (s.config.mode == GameMode.TOURNAMENT) {
+            val left = s.config.handsPerLevel - (s.handNumber % s.config.handsPerLevel)
+            strings.levelText(lvl.level, left)
+        } else null
+    }
+
+    private suspend fun runGame(s: GameSession) {
+        while (!s.isOver && !quitRequested) {
+            val e = s.startHand()
+            handKey = System.nanoTime()
+            actionSeq = 0
+            handNumber = s.handNumber + 1
+            updateBlinds(s)
+            log.clear()
+            handOver = null
+            heroInHand = true
+            fastForward = false
+            legal = null
+            practiceInfo = null
+            actingName = null
+            log += LogLine(LogKind.STREET, strings.preflop)
+            for (a in e.actions) logAction(e, s, a)
+            publish(s, e, TableMapper.Stage.LIVE)
+            pause(1000) // cards being dealt
+
+            while (e.phase != Phase.HAND_DONE) {
+                when (e.phase) {
+                    Phase.STREET_DONE -> {
+                        actingName = null
+                        publish(s, e, TableMapper.Stage.LIVE)
+                        pause(if (e.isRunout) 900 else 450)
+                        e.dealNextStreet()
+                        actionSeq++
+                        log += TableMapper.streetLine(strings, e.street, e.board)
+                        publish(s, e, TableMapper.Stage.LIVE)
+                        pause(if (e.street == Street.FLOP) 800 else 550)
+                    }
+                    Phase.BETTING -> {
+                        val seat = e.toAct
+                        if (seat == GameSession.HERO_SEAT) {
+                            if (quitRequested) { apply(e, s, Move.FOLD); continue }
+                            fastForward = false
+                            actingName = null
+                            val la = e.legalActions()
+                            val me = e.player(seat)
+                            practiceInfo = PracticeInfo(
+                                la.toCall, la.pot,
+                                if (la.toCall > 0) la.toCall.toDouble() / (la.pot + la.toCall) else 0.0,
+                                me.stack.toDouble() / maxOf(1, la.pot),
+                                TableMapper.handText(strings, me.hole, e.board),
+                            )
+                            legal = la
+                            publish(s, e, TableMapper.Stage.LIVE)
+                            val d = CompletableDeferred<Move>()
+                            heroMove = d
+                            val move = d.await()
+                            heroMove = null
+                            legal = null
+                            practiceInfo = null
+                            apply(e, s, move)
+                            if (e.player(seat).folded) heroInHand = false
+                        } else {
+                            val name = s.players[seat].name
+                            actingName = name
+                            val think = if (fastForward) 0L else botDelay
+                            publish(s, e, TableMapper.Stage.LIVE, think)
+                            val started = System.currentTimeMillis()
+                            val style = s.players[seat].style
+                            val ctx = s.tournamentContext()
+                            val move = withContext(Dispatchers.Default) {
+                                Bot.decide(e, seat, style, s.random, ctx).sample(s.random)
+                            }
+                            pause(think - (System.currentTimeMillis() - started))
+                            apply(e, s, move)
+                        }
+                        actingName = null
+                        publish(s, e, TableMapper.Stage.LIVE)
+                        pause(250)
+                    }
+                    Phase.HAND_DONE -> {}
+                }
+            }
+
+            // ---- hand finished: gather the bets, reveal, then pay the winners
+            legal = null
+            actingName = null
+            val infosBefore = seatInfos(s)
+            val rec = s.completeHand(e)
+            withContext(Dispatchers.IO) { history.add(rec) }
+            val bb = e.bigBlind
+            table = TableMapper.build(strings, e, infosBefore, handKey, actionSeq, TableMapper.Stage.COLLECT, { fmt(it, bb) })
+            val showdown = e.result?.showdown?.isNotEmpty() == true
+            delay(if (showdown) 1200 else 600)
+            table = TableMapper.build(strings, e, infosBefore, handKey, actionSeq, TableMapper.Stage.FINAL, { fmt(it, bb) })
+            TableMapper.resultBanner(strings, e, infosBefore) { fmt(it, bb) }?.let { log += LogLine(LogKind.RESULT, it) }
+            handOver = TableMapper.handOver(strings, e, infosBefore, GameSession.HERO_SEAT)
+            sessionOver = s.isOver
+            fastForward = false
+            if (!quitRequested) {
+                val sig = CompletableDeferred<Unit>()
+                nextHandSignal = sig
+                sig.await()
+                nextHandSignal = null
             }
         }
-        table = TableView(seats, e.board.toList(), if (final) 0 else e.pot, e.bigBlind)
+        val summary = s.finish(early = quitRequested && !(s.alivePlayers.size <= 1 || !s.hero.alive))
+        prefs.recordSession(summary, Icm.payoutsFor(s.config.tableSize).size)
+        table = null
+        handOver = null
+        screen = Screen.Result(summary)
     }
-
-    private fun wonPots(res: com.riverrunner.engine.HandResult?, seat: Int): Int {
-        if (res == null) return 0
-        val ret = res.uncalledReturned
-        val back = if (ret != null && ret.first == seat) ret.second else 0
-        return (res.won[seat] ?: 0) - back
-    }
-
-    private fun displayName(seat: Int, name: String) = if (seat == GameSession.HERO_SEAT) strings.you else name
 
     // ------------------------------------------------------------------ history helpers
     fun toggleFavorite(id: Long): HandRecord? = history.toggleFavorite(id)
-}
 
-object Format {
-    fun amount(chips: Int, bb: Int, inBB: Boolean): String {
-        if (!inBB || bb <= 0) return "%,d".format(chips)
-        val v = chips.toDouble() / bb
-        return if (v >= 100 || v == Math.floor(v)) "%.0f BB".format(v) else "%.1f BB".format(v)
-    }
-
-    fun pct(x: Double): String = "%.0f%%".format(x * 100)
-}
-
-fun streetName(st: Strings, s: Street) = when (s) {
-    Street.PREFLOP -> st.preflop; Street.FLOP -> st.flop; Street.TURN -> st.turn; Street.RIVER -> st.river
+    fun actionLabel(a: Action, bb: Int): String = TableMapper.actionLabel(strings, a) { fmt(it, bb) }
 }

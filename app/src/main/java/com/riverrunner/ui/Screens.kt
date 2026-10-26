@@ -2,6 +2,7 @@ package com.riverrunner.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,20 +67,29 @@ fun HomeScreen(vm: AppViewModel) {
     var ante by remember { mutableStateOf(p.lastAnte) }
     val stackOptions = if (mode == GameMode.CASH) listOf(50, 100, 150, 200) else listOf(20, 30, 50, 75, 100)
 
-    Row(Modifier.fillMaxSize().background(Palette.Bg).padding(16.dp)) {
-        Column(Modifier.width(220.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(Modifier.fillMaxSize().background(Palette.Bg).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.width(210.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("♠ ${st.appName}", color = Palette.Gold, fontSize = 26.sp, fontWeight = FontWeight.Bold)
             Text(st.tagline, color = Palette.TextDim, fontSize = 13.sp)
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
+            Column(
+                Modifier.fillMaxWidth().pressable { vm.screen = Screen.Guide }.clip(RoundedCornerShape(10.dp))
+                    .background(Palette.GoldDim.copy(alpha = 0.35f))
+                    .border(1.dp, Palette.Gold.copy(alpha = 0.7f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text("📖 " + st.guide, color = Palette.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(st.guideSub, color = Palette.TextDim, fontSize = 11.sp)
+            }
             NavItem(st.history) { vm.screen = Screen.History }
             NavItem(st.stats) { vm.screen = Screen.Stats }
             NavItem(st.settings) { vm.screen = Screen.Settings }
         }
         Column(
-            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(14.dp)).background(Palette.Panel)
-                .padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(14.dp)).background(Palette.Panel).padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+          Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             OptionRow(st.mode) {
                 Pill(st.cash, mode == GameMode.CASH, { mode = GameMode.CASH; if (stackBB !in listOf(50, 100, 150, 200)) stackBB = 100 })
                 Pill(st.tournament, mode == GameMode.TOURNAMENT, { mode = GameMode.TOURNAMENT; if (stackBB !in listOf(20, 30, 50, 75, 100)) stackBB = 50 })
@@ -105,7 +115,8 @@ fun HomeScreen(vm: AppViewModel) {
                     Pill("12.5%", ante, { ante = true })
                 }
             }
-            ActionButton(st.start, Palette.RaiseBtn, modifier = Modifier.fillMaxWidth()) {
+          }
+            ActionButton(st.start + "  ▶", Palette.RaiseBtn, modifier = Modifier.fillMaxWidth().height(46.dp)) {
                 p.lastMode = mode; p.lastSize = size; p.lastStackBB = stackBB
                 p.lastTableType = table; p.lastHandsPerLevel = hpl; p.lastAnte = ante
                 vm.startGame(
@@ -122,8 +133,8 @@ fun HomeScreen(vm: AppViewModel) {
 @Composable
 private fun NavItem(text: String, onClick: () -> Unit) {
     Box(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Palette.Panel)
-            .clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().pressable(onClick = onClick).clip(RoundedCornerShape(10.dp)).background(Palette.Panel)
+            .padding(horizontal = 14.dp, vertical = 11.dp),
     ) { Text(text, color = Palette.Text, fontSize = 15.sp) }
 }
 
