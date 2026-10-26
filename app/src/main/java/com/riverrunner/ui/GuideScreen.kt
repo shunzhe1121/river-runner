@@ -268,21 +268,21 @@ private fun Positions(zh: Boolean) {
         }
     }
     val rows = if (zh) listOf(
-        "BTN 按钮/庄位" to "翻牌后永远最后行动，信息最多，是最赚钱的位置，可以玩最宽的范围（约40%+的手牌）。",
-        "SB 小盲" to "已经强制下了半个大盲，但翻牌后最先行动，位置最差。",
-        "BB 大盲" to "已经下了一个大盲，别人加注时可以用较宽的范围防守，因为跟注价格便宜。",
-        "UTG 枪口" to "翻牌前第一个行动，后面还有很多人没说话，要打得最紧（约12–17%）。",
-        "UTG+1 / UTG+2" to "前位，人多的桌子才有，仍然要紧。",
-        "HJ 劫持位" to "中位，范围比前位宽一些（约20%）。",
-        "CO 关煞位" to "按钮右边，后位，可以打得比较宽（约28%）。",
+        "BTN · Button 按钮位/庄位" to "翻牌后永远最后行动，信息最多，是最赚钱的位置，可以玩最宽的范围（约40%+的手牌）。",
+        "SB · Small Blind 小盲" to "已经强制下了半个大盲，但翻牌后最先行动，位置最差。",
+        "BB · Big Blind 大盲" to "已经下了一个大盲，别人加注时可以用较宽的范围防守，因为跟注价格便宜。",
+        "UTG · Under The Gun 枪口位" to "翻牌前第一个行动，后面还有很多人没说话，要打得最紧（约12–17%）。",
+        "UTG+1 / UTG+2 · 枪口位左边 1、2 位" to "前位，人多的桌子才有，仍然要紧。",
+        "HJ · Hijack 劫持位" to "中位，范围比前位宽一些（约20%）。",
+        "CO · Cutoff 关煞位" to "按钮右边，后位，可以打得比较宽（约28%）。",
     ) else listOf(
-        "BTN (button)" to "Acts last after the flop — the best seat. You can play the widest range (40%+ of hands).",
-        "SB (small blind)" to "Already paid half a blind but acts first after the flop: the worst position.",
-        "BB (big blind)" to "Already paid a full blind, so can defend widely against raises at a cheap price.",
-        "UTG (under the gun)" to "First to act preflop with many players behind: play the tightest (about 12–17%).",
-        "UTG+1 / UTG+2" to "Early positions at bigger tables; still tight.",
-        "HJ (hijack)" to "Middle position, a bit wider (about 20%).",
-        "CO (cutoff)" to "Right of the button, late position, fairly wide (about 28%).",
+        "BTN · Button" to "Acts last after the flop — the best seat. You can play the widest range (40%+ of hands).",
+        "SB · Small Blind" to "Already paid half a blind but acts first after the flop: the worst position.",
+        "BB · Big Blind" to "Already paid a full blind, so can defend widely against raises at a cheap price.",
+        "UTG · Under The Gun" to "First to act preflop with many players behind: play the tightest (about 12–17%).",
+        "UTG+1 / UTG+2 · one / two seats left of UTG" to "Early positions at bigger tables; still tight.",
+        "HJ · Hijack" to "Middle position, a bit wider (about 20%).",
+        "CO · Cutoff" to "Right of the button, late position, fairly wide (about 28%).",
     )
     for ((t, d) in rows) {
         Text(t, color = Palette.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -297,45 +297,55 @@ private fun Positions(zh: Boolean) {
 
 // ----------------------------------------------------------------- glossary
 
-private data class Term(val zh: String, val zhDesc: String, val en: String, val enDesc: String)
+/** [full]: the full English name of an abbreviation (shown in both languages). */
+private data class Term(val zh: String, val zhDesc: String, val en: String, val enDesc: String, val full: String = "")
 
 private val TERMS = listOf(
-    Term("BB / 大盲", "大盲注。本软件用多少个大盲来衡量筹码和下注，比如 100 BB 表示 100 个大盲。", "BB / big blind", "The big blind. Stacks and bets are measured in big blinds, e.g. 100 BB."),
-    Term("SB / 小盲", "小盲注，等于半个大盲。", "SB / small blind", "Half of a big blind."),
+    Term("BB / 大盲", "大盲注。本软件用多少个大盲来衡量筹码和下注，比如 100 BB 表示 100 个大盲。锦标赛涨盲后，同样的筹码折合的 BB 数会变少。", "BB", "The big blind. Stacks and bets are measured in big blinds, e.g. 100 BB. When tournament blinds rise, the same chips are worth fewer BB.", "Big Blind"),
+    Term("SB / 小盲", "小盲注，等于半个大盲。", "SB", "The small blind: half of a big blind.", "Small Blind"),
+    Term("BTN / 按钮位", "庄家按钮所在位置，翻牌后最后行动。", "BTN", "The dealer button seat; acts last after the flop.", "Button"),
+    Term("UTG / 枪口位", "翻牌前第一个行动的位置，就像\"在枪口下\"。UTG+1、UTG+2 是它左边的位置。", "UTG", "First to act preflop. UTG+1 and UTG+2 are the seats to its left.", "Under The Gun"),
+    Term("HJ / 劫持位", "关煞位右边的中间位置。", "HJ", "The middle-position seat right of the cutoff.", "Hijack"),
+    Term("CO / 关煞位", "按钮右边的位置，后位。", "CO", "The seat right of the button; late position.", "Cutoff"),
     Term("前注 Ante", "每人每手都要交的小额强制下注，让底池更大，常见于锦标赛后期。", "Ante", "A small forced bet from every player each hand, common later in tournaments."),
     Term("底池 Pot", "本手所有人已经投入的筹码总和。", "Pot", "All chips put in so far this hand."),
+    Term("全下 All-in", "把剩下的筹码全部推进去。", "All-in", "Putting all your remaining chips in the pot."),
     Term("边池 Side pot", "有人全下但筹码比别人少时，超出部分单独形成边池，全下的人赢不到边池。", "Side pot", "When a player is all-in for less, the extra chips form a side pot that player can't win."),
     Term("底池赔率 Pot odds", "跟注额和跟注后底池的比例。例：底池 4.7BB，需跟 2BB，赔率是 1:2.4。", "Pot odds", "The price of a call relative to the pot, e.g. calling 2 BB into 4.7 BB is 1 : 2.4."),
     Term("所需胜率", "跟注不亏所需的最低胜率 = 跟注额 ÷ (底池 + 跟注额)。你的胜率高于它，长期跟注就是赚的。", "Equity needed", "Minimum winning chance for a call to break even = call ÷ (pot + call)."),
     Term("胜率 Equity", "如果现在全部亮牌并发完公共牌，你赢下底池的概率（复盘里能看到）。", "Equity", "Your share of the pot if all cards were shown and the board dealt out (shown in replays)."),
-    Term("SPR", "筹码底池比 = 有效筹码 ÷ 底池。SPR 越小，越容易全下；SPR 很大时要更谨慎地用一对这样的牌投入全部筹码。", "SPR", "Stack-to-pot ratio = effective stack ÷ pot. Low SPR means you are close to all-in."),
+    Term("SPR / 筹码底池比", "= 有效筹码 ÷ 底池。SPR 越小，越容易全下；SPR 很大时要更谨慎地用一对这样的牌投入全部筹码。", "SPR", "Effective stack ÷ pot. Low SPR means you are close to all-in.", "Stack-to-Pot Ratio"),
     Term("有效筹码", "两人中筹码较少的一方的筹码量，决定了最多能输赢多少。", "Effective stack", "The smaller of two stacks: the most either can win or lose."),
     Term("范围 Range", "对手在某种行动下可能持有的所有手牌集合。高手思考的是范围，而不是猜一手具体的牌。", "Range", "All the hands a player could have given their actions. Think in ranges, not single hands."),
-    Term("GTO", "博弈论最优策略：一种无法被剥削的平衡打法。真正的 GTO 只在单挑有可靠解，多人桌使用近似解。", "GTO", "Game-theory-optimal: a balanced strategy that can't be exploited. Exact only heads-up; multi-way bots use approximations."),
+    Term("GTO / 博弈论最优", "一种无法被剥削的平衡打法。真正的 GTO 只在单挑有可靠解，多人桌使用近似解。", "GTO", "A balanced strategy that can't be exploited. Exact only heads-up; multi-way bots use approximations.", "Game Theory Optimal"),
     Term("剥削 Exploit", "针对对手的漏洞调整打法，比如对跟注站少诈唬、多价值下注。", "Exploit", "Deviating to attack an opponent's leaks, e.g. bluff less and value-bet more against a calling station."),
-    Term("开池 RFI / Open", "前面的人都弃牌时第一个加注入池。", "RFI / open", "Raise first in: the first raise when everyone before you folded."),
+    Term("RFI / 开池加注", "前面的人都弃牌时第一个加注入池，也叫 Open。", "RFI / Open", "The first raise when everyone before you folded.", "Raise First In"),
     Term("溜入 Limp", "翻牌前只跟注大盲而不加注入池，通常不推荐。", "Limp", "Just calling the big blind preflop instead of raising; usually not recommended."),
-    Term("3-Bet / 4-Bet", "对加注再加注叫 3-Bet，对 3-Bet 再加注叫 4-Bet。", "3-Bet / 4-Bet", "Re-raising a raise is a 3-bet; re-raising that is a 4-bet."),
-    Term("持续下注 C-bet", "翻牌前加注的人在翻牌继续下注。", "C-bet", "Continuation bet: the preflop raiser bets again on the flop."),
-    Term("价值下注", "用你认为领先的牌下注，希望更差的牌跟注。", "Value bet", "Betting a hand you think is best so worse hands call."),
-    Term("诈唬 Bluff", "用很弱的牌下注，希望更好的牌弃牌。半诈唬是用听牌诈唬，被跟注后还有机会成牌。", "Bluff", "Betting a weak hand to make better hands fold. A semi-bluff has a draw that can still improve."),
+    Term("3-Bet / 4-Bet", "第一次加注算 2-Bet（大盲算第 1 注），对加注再加注叫 3-Bet，对 3-Bet 再加注叫 4-Bet。", "3-Bet / 4-Bet", "The open is the 2nd bet (the big blind is the 1st); re-raising it is a 3-bet; re-raising that is a 4-bet.", "Third bet / Fourth bet"),
+    Term("C-bet / 持续下注", "翻牌前加注的人在翻牌继续下注。", "C-bet", "The preflop raiser bets again on the flop.", "Continuation Bet"),
+    Term("价值下注 Value bet", "用你认为领先的牌下注，希望更差的牌跟注。", "Value bet", "Betting a hand you think is best so worse hands call."),
+    Term("诈唬 Bluff", "用很弱的牌下注，希望更好的牌弃牌。半诈唬(Semi-bluff)是用听牌诈唬，被跟注后还有机会成牌。", "Bluff", "Betting a weak hand to make better hands fold. A semi-bluff has a draw that can still improve."),
     Term("听牌 Draw", "还差一张就能成同花或顺子的牌，比如四张同花。", "Draw", "A hand that needs one more card to make a flush or straight."),
     Term("出张 Outs", "能让你成牌的剩余张数。同花听牌有 9 张，两头顺子听牌有 8 张。", "Outs", "Cards that complete your hand: 9 for a flush draw, 8 for an open-ended straight draw."),
     Term("2/4 法则", "粗算成牌概率：翻牌圈 出张×4%（看两张），转牌圈 出张×2%（看一张）。", "Rule of 2 and 4", "Quick odds: outs × 4% on the flop (two cards to come), outs × 2% on the turn."),
     Term("踢脚 Kicker", "牌型相同时用来比大小的剩余单张。", "Kicker", "The side card that breaks ties between equal hands."),
     Term("坚果 Nuts", "当前公共牌下最大的牌。", "Nuts", "The best possible hand on the current board."),
-    Term("顶对", "用底牌和公共牌最大的那张组成一对。", "Top pair", "Pairing the highest card on the board."),
+    Term("顶对 / 超对 / 暗三条", "顶对 Top pair：用底牌配上公共牌最大的那张。超对 Overpair：口袋对子比所有公共牌都大。暗三条 Set：口袋对子配中公共牌。", "Top pair / Overpair / Set", "Top pair: pairing the highest board card. Overpair: a pocket pair above every board card. Set: a pocket pair that hits the board."),
     Term("翻牌 / 转牌 / 河牌", "第 3、4、5 张公共牌出现的三个阶段（翻牌一次发三张）。", "Flop / Turn / River", "The 3-card, 4th and 5th community card stages."),
     Term("摊牌 Showdown", "最后一轮下注结束后亮牌比大小。", "Showdown", "Showing hands after the last betting round."),
-    Term("ICM", "锦标赛独立筹码模型：把筹码换算成奖金价值。临近奖励圈时，输光的代价更大，需要更紧。", "ICM", "Independent Chip Model: converts tournament chips into prize value. Near the money, busting costs more, so play tighter."),
+    Term("ICM / 独立筹码模型", "锦标赛里把筹码换算成奖金价值的模型。临近奖励圈时，输光的代价更大，需要更紧。", "ICM", "Converts tournament chips into prize value. Near the money, busting costs more, so play tighter.", "Independent Chip Model"),
     Term("泡沫 Bubble", "离进入奖励圈只差一个人出局的阶段。", "Bubble", "When one more elimination puts everyone left in the money."),
+    Term("ITM / 进入奖励圈", "锦标赛中进入有奖名次。", "ITM", "Finishing in a paid place in a tournament.", "In The Money"),
     Term("推/弃 Push/Fold", "筹码很短（约 15BB 以下）时，只选择全下或弃牌的打法。", "Push/fold", "With a short stack (under ~15 BB) you either go all-in or fold."),
-    Term("VPIP", "主动入池率：翻牌前自愿投入筹码（跟注或加注）的比例。常规玩家 6 人桌约 20–28%。", "VPIP", "Voluntarily put money in pot preflop. Typical 6-max regulars: about 20–28%."),
-    Term("PFR", "翻牌前加注率。和 VPIP 越接近，说明越少溜入/跟注，打法越主动。", "PFR", "Preflop raise percentage. The closer to VPIP, the more aggressive."),
-    Term("WTSD / W\$SD", "看到翻牌后打到摊牌的比例 / 摊牌时赢钱的比例。", "WTSD / W\$SD", "Went to showdown after seeing the flop / won money at showdown."),
-    Term("BB/100", "每 100 手赢多少个大盲，衡量胜率的标准指标。", "BB/100", "Big blinds won per 100 hands — the standard win-rate measure."),
-    Term("紧凶 / 松凶", "紧凶(TAG)：玩得少但下注主动；松凶(LAG)：玩得多且主动。", "TAG / LAG", "Tight-aggressive plays few hands but bets them; loose-aggressive plays many hands aggressively."),
-    Term("跟注站 / 紧弱 / 疯子", "跟注站：什么都跟很少弃牌；紧弱：只玩好牌且被动；疯子：疯狂加注诈唬。", "Station / Nit / Maniac", "Station calls too much; nit plays only premium hands passively; maniac raises and bluffs constantly."),
+    Term("NLHE / 无限注德州", "下注上限只受自己筹码限制的德州扑克，本软件就是这种。", "NLHE", "Hold'em where the only betting limit is your stack — what this app plays.", "No-Limit Hold'em"),
+    Term("VPIP / 主动入池率", "翻牌前自愿投入筹码（跟注或加注，不含盲注）的比例。常规玩家 6 人桌约 20–28%。", "VPIP", "How often you put chips in preflop by choice (blinds don't count). Typical 6-max regulars: about 20–28%.", "Voluntarily Put money In Pot"),
+    Term("PFR / 翻前加注率", "翻牌前加注的比例。和 VPIP 越接近，说明越少溜入/跟注，打法越主动。", "PFR", "How often you raise preflop. The closer to VPIP, the more aggressive.", "Pre-Flop Raise"),
+    Term("WTSD / 摊牌率", "看到翻牌后一路打到摊牌的比例。", "WTSD", "How often you reach showdown after seeing the flop.", "Went To ShowDown"),
+    Term("W\$SD / 摊牌胜率", "打到摊牌时赢钱的比例。", "W\$SD", "How often you win money when you reach showdown.", "Won \$ at ShowDown"),
+    Term("BB/100", "每 100 手赢多少个大盲，衡量胜率的标准指标。", "BB/100", "Big blinds won per 100 hands — the standard win-rate measure.", "Big Blinds per 100 hands"),
+    Term("TAG / 紧凶", "玩得少，但一旦入池就主动下注加注。", "TAG", "Plays few hands but bets and raises them.", "Tight-Aggressive"),
+    Term("LAG / 松凶", "玩得多且主动。", "LAG", "Plays many hands aggressively.", "Loose-Aggressive"),
+    Term("跟注站 / 紧弱 / 疯子", "跟注站 Calling station：什么都跟很少弃牌；紧弱 Nit：只玩好牌且被动；疯子 Maniac：疯狂加注诈唬。", "Station / Nit / Maniac", "A calling station calls too much; a nit plays only premium hands passively; a maniac raises and bluffs constantly."),
 )
 
 @Composable
@@ -343,7 +353,13 @@ private fun Glossary(zh: Boolean) {
     H(if (zh) "常用术语" else "Common terms")
     for (t in TERMS) {
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.PanelHi).padding(horizontal = 10.dp, vertical = 6.dp)) {
-            Text(if (zh) t.zh else t.en, color = Palette.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(if (zh) t.zh else t.en, color = Palette.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                if (t.full.isNotEmpty()) {
+                    Spacer(Modifier.width(8.dp))
+                    Text(t.full, color = Palette.Blue, fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                }
+            }
             Text(if (zh) t.zhDesc else t.enDesc, color = Palette.Text, fontSize = 12.sp, lineHeight = 18.sp)
         }
     }
@@ -374,8 +390,9 @@ private val TIPS_EN = listOf(
 )
 
 private val APP_ZH = listOf(
-    "模式" to "筹码局：NPC 输光离场，打到只剩一人或你退出时按筹码结算排名。锦标赛：每 N 手涨盲，后期加前注，奖励按名次分配，NPC 会考虑 ICM。",
+    "模式" to "筹码局：盲注固定，NPC 输光离场，打到只剩一人或你退出时按筹码结算排名。锦标赛：每 N 手涨盲，后期加前注，奖励按名次分配，NPC 会考虑 ICM。注意：涨盲后所有人的筹码没有变，但用大盲(BB)衡量的数字会越来越小——这正是锦标赛逼大家行动的方式。",
     "牌桌" to "GTO桌：所有 NPC 使用近似 GTO 策略，适合练习\"不被剥削\"。混合桌：随机分配紧凶、松凶、跟注站、紧弱、疯子、GTO 等风格，更像真实牌局，适合练习剥削。",
+    "音效" to "牌桌右上角 🔊 可以随时静音，设置里也能关闭。快进时自动静音。",
     "练习模式" to "牌局中随时开关。打开后在你行动时显示底池、需跟注、底池赔率、所需胜率、SPR 和你当前的牌型，但不会显示胜率。",
     "本手结束" to "每手结束后会亮出摊牌玩家的底牌、高亮赢家的 5 张牌，并在右侧显示结果。点\"下一手\"才会继续。你弃牌后可以点\"快进本手\"。",
     "复盘" to "\"牌局记录\"保存最近 1000 手，点开可以一步步回放，显示所有人底牌、每条街的胜率，并在你的每个决策点给出 GTO 建议和\"符合/偏离\"标记。点 ☆ 可以永久收藏。",
@@ -383,8 +400,9 @@ private val APP_ZH = listOf(
 )
 
 private val APP_EN = listOf(
-    "Modes" to "Cash: busted bots leave; play until one player remains or you leave, standings by chips. Tournament: blinds rise every N hands, antes later, prizes by finishing place, bots use ICM.",
+    "Modes" to "Cash: blinds stay fixed; busted bots leave; play until one player remains or you leave, standings by chips. Tournament: blinds rise every N hands, antes later, prizes by finishing place, bots use ICM. When blinds rise nobody loses chips, but stacks measured in big blinds (BB) shrink — that pressure is how tournaments force action.",
     "Tables" to "GTO table: every bot plays approximate GTO — practice not being exploited. Mixed table: random TAG, LAG, station, nit, maniac and GTO bots — closer to a real game, practice exploiting.",
+    "Sound" to "Tap 🔊 at the top right of the table to mute; also in Settings. Sounds are muted while skipping.",
     "Practice mode" to "Toggle any time. On your turn it shows pot, amount to call, pot odds, equity needed, SPR and your current hand — never your equity.",
     "End of a hand" to "Showdown hands are revealed, the winning five cards are highlighted and the result is shown on the right. Nothing continues until you tap \"Next hand\". After folding you can tap \"Skip hand\".",
     "Replay" to "History keeps the last 1000 hands. Step through any of them with every hole card shown, equity per street, and a GTO suggestion with an \"in line / deviation\" flag for each of your decisions. Tap ☆ to keep a hand forever.",

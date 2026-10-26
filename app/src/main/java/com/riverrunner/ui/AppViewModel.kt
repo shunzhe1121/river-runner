@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.riverrunner.audio.Sound
+import com.riverrunner.audio.SoundPlayer
 import com.riverrunner.data.HistoryStore
 import com.riverrunner.data.Prefs
 import com.riverrunner.engine.Action
@@ -54,6 +56,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setChinese(zh: Boolean) { prefs.chinese = zh; strings = if (zh) ZH else EN }
     fun setShowBB(v: Boolean) { prefs.showInBB = v; showInBB = v }
 
+    private val sound = SoundPlayer(app).also { it.enabled = prefs.sound }
+    var soundOn by mutableStateOf(prefs.sound); private set
+    fun setSound(v: Boolean) { prefs.sound = v; soundOn = v; sound.enabled = v }
+
+    /** Plays a game sound (muted while fast-forwarding). */
+    private fun sfx(s: Sound, volume: Float = 1f) {
+        if (!fastForward) sound.play(s, volume)
+    }
+
+    override fun onCleared() {
+        sound.release()
+        super.onCleared()
+    }
+
     // ------------------------------------------------------------------ live game state
     private var table by mutableStateOf<TableUi?>(null)
     private var legal by mutableStateOf<LegalActions?>(null)
@@ -65,6 +81,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private var actingName by mutableStateOf<String?>(null)
     private var heroInHand by mutableStateOf(true)
     private var sessionOver by mutableStateOf(false)
+    private var notice by mutableStateOf<String?>(null)
+    private var lastBlinds: Pair<Int, Int>? = null
     private val log = mutableStateListOf<LogLine>()
     var practice by mutableStateOf(prefs.practiceDefault)
     var fastForward by mutableStateOf(false)
@@ -75,6 +93,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             practice = practice, legal = legal, practiceInfo = practiceInfo, log = log.toList(),
             handOver = handOver, actingName = actingName, heroInHand = heroInHand,
             fastForward = fastForward, sessionOver = sessionOver,
+            notice = notice, soundOn = soundOn,
         )
 
     private var session: GameSession? = null
@@ -96,6 +115,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         quitRequested = false
         practice = prefs.practiceDefault
         sessionOver = false
+        notice = null
+        lastBlinds = null
         table = null
         screen = Screen.Table
         gameJob = viewModelScope.launch { runGame(s) }
@@ -144,6 +165,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val a = e.apply(move)
         actionSeq++
         logAction(e, s, a)
+        when {
+            a.type == ActionType.FOLD -> sfx(Sound.FOLD, 0.7f)
+            a.type == ActionType.CHECK -> sfx(Sound.CHECK, 0.8f)
+            a.allIn -> sfx(Sound.ALLIN)
+            else -> sfx(Sound.CHIP, 0.85f)
+        }
     }
 
     private fun updateBlinds(s: GameSession) {
@@ -171,7 +198,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             actingName = null
             log += LogLine(LogKind.STREET, strings.preflop)
             for (a in e.actions) logAction(e, s, a)
+            val lvl = s.currentLevel()
+            val prev = lastBlinds
+            if (prev != null && lvl.bigBlind > prev.second) {
+                notice = strings.blindsUpNotice("%,d/%,d".format(prev.first, prev.second), "%,d/%,d".format(lvl.smallBlind, lvl.bigBlind))
+                sound.play(Sound.BLINDS, 0.8f, varyPitch = false)
+                val shown = notice
+                viewModelScope.launch { delay(4000); if (notice == shown) notice = null }
+            }
+            lastBlinds = lvl.smallBlind to lvl.bigBlind
             publish(s, e, TableMapper.Stage.LIVE)
+            viewModelScope.launch {
+                repeat(e.order.size) { sfx(Sound.DEAL, 0.6f); delay(80) }
+            }
             pause(1000) // cards being dealt
 
             while (e.phase != Phase.HAND_DONE) {
@@ -180,7 +219,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                         actingName = null
                         publish(s, e, TableMapper.Stage.LIVE)
                         pause(if (e.isRunout) 900 else 450)
+                        val hadBets = e.players.any { it.streetBet > 0 }
                         e.dealNextStreet()
+                        if (hadBets) sfx(Sound.COLLECT, 0.6f)
+                        val flips = if (e.street == Street.FLOP) 3 else 1
+                        viewModelScope.launch {
+                            for (i in 0 until flips) { delay(if (i == 0) 170L else 120L); sfx(Sound.FLIP, 0.8f) }
+                        }
                         actionSeq++
                         log += TableMapper.streetLine(strings, e.street, e.board)
                         publish(s, e, TableMapper.Stage.LIVE)
@@ -202,6 +247,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                             )
                             legal = la
                             publish(s, e, TableMapper.Stage.LIVE)
+                            sound.play(Sound.TURN, 0.55f, varyPitch = false)
                             val d = CompletableDeferred<Move>()
                             heroMove = d
                             val move = d.await()
@@ -239,10 +285,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             val rec = s.completeHand(e)
             withContext(Dispatchers.IO) { history.add(rec) }
             val bb = e.bigBlind
+            val betsOut = e.players.any { it.streetBet > 0 }
+            val wasFast = fastForward
+            fastForward = false
             table = TableMapper.build(strings, e, infosBefore, handKey, actionSeq, TableMapper.Stage.COLLECT, { fmt(it, bb) })
+            if (betsOut) sfx(Sound.COLLECT, 0.6f)
             val showdown = e.result?.showdown?.isNotEmpty() == true
-            delay(if (showdown) 1200 else 600)
+            if (showdown) sfx(Sound.FLIP, 0.8f)
+            delay(if (wasFast) 300L else if (showdown) 1200L else 600L)
             table = TableMapper.build(strings, e, infosBefore, handKey, actionSeq, TableMapper.Stage.FINAL, { fmt(it, bb) })
+            if ((e.result?.net?.get(GameSession.HERO_SEAT) ?: 0) > 0) sfx(Sound.WIN, 0.8f) else sfx(Sound.COLLECT, 0.7f)
             TableMapper.resultBanner(strings, e, infosBefore) { fmt(it, bb) }?.let { log += LogLine(LogKind.RESULT, it) }
             handOver = TableMapper.handOver(strings, e, infosBefore, GameSession.HERO_SEAT)
             sessionOver = s.isOver
