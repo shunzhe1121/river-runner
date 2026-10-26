@@ -83,7 +83,7 @@ fun replayTable(st: Strings, record: HandRecord, frames: List<ReplayFrame>, idx:
             val w = winners.maxBy { it.stack - it.startStack }
             highlight = HandEvaluator.bestFive((frame.board + w.hole.toList()).toIntArray()).toSet()
         }
-        banner = winners.joinToString(" / ") { "${names.getValue(it.seat)} ${st.wins} ${fmt(it.stack - it.startStack)}" }
+        banner = winners.joinToString(" / ") { "${st.winsFor(names.getValue(it.seat))} ${fmt(it.stack - it.startStack)}" }
             .ifEmpty { null }
     }
     val seats = frame.players.sortedBy { it.seat }.map { p ->
