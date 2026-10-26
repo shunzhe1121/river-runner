@@ -143,6 +143,37 @@ data class Strings(
     val winsFor: (String) -> String,
     val sound: String,
     val blindsUpNotice: (String, String) -> String,
+    val saveDefaultName: (Int) -> String,
+    val saves: String,
+    val switchSave: String,
+    val newSave: String,
+    val currentSave: String,
+    val useSave: String,
+    val rename: String,
+    val deleteSave: String,
+    val deleteSaveTitle: (String) -> String,
+    val deleteSaveText: String,
+    val keep: String,
+    val saveName: String,
+    val create: String,
+    val saveAction: String,
+    val slotsFull: (Int) -> String,
+    val achievements: String,
+    val unlockedCount: (Int, Int) -> String,
+    val achievementUnlocked: String,
+    val unlockedOn: (String) -> String,
+    val categoryName: (com.riverrunner.engine.AchCategory) -> String,
+    val handsLabel: String,
+    val cashBBLabel: String,
+    val titlesLabel: String,
+    val leaveTable: String,
+    val keepPlaying: String,
+    val clearAction: String,
+    val noHandsHint: String,
+    val noSwitchInGame: String,
+    val saveSlotCount: (Int, Int) -> String,
+    val careerTitleFor: (String) -> String,
+    val newGame: String,
 )
 
 val ZH = Strings(
@@ -287,6 +318,44 @@ val ZH = Strings(
     winsFor = { "$it 赢得" },
     sound = "音效",
     blindsUpNotice = { old, new -> "盲注上涨  $old → $new\n筹码没变，但折合的大盲(BB)数会变少" },
+    saveDefaultName = { "存档 $it" },
+    saves = "存档",
+    switchSave = "切换存档",
+    newSave = "新建存档",
+    currentSave = "当前",
+    useSave = "使用这个存档",
+    rename = "重命名",
+    deleteSave = "删除存档",
+    deleteSaveTitle = { "删除「$it」？" },
+    deleteSaveText = "这个存档的牌局记录、统计和成就会被永久删除，无法恢复。",
+    keep = "保留",
+    saveName = "存档名称",
+    create = "创建",
+    saveAction = "保存",
+    slotsFull = { "最多 $it 个存档，删除一个后才能新建" },
+    achievements = "成就",
+    unlockedCount = { a, b -> "已解锁 $a / $b" },
+    achievementUnlocked = "成就解锁",
+    unlockedOn = { "$it 解锁" },
+    categoryName = { when (it) {
+        com.riverrunner.engine.AchCategory.START -> "起步"
+        com.riverrunner.engine.AchCategory.SKILL -> "技术"
+        com.riverrunner.engine.AchCategory.HANDS -> "牌型"
+        com.riverrunner.engine.AchCategory.TOURNAMENT -> "锦标赛"
+        com.riverrunner.engine.AchCategory.CASH -> "筹码局"
+        com.riverrunner.engine.AchCategory.STUDY -> "学习"
+    } },
+    handsLabel = "手数",
+    cashBBLabel = "筹码局 BB",
+    titlesLabel = "冠军",
+    leaveTable = "离开牌桌",
+    keepPlaying = "继续打",
+    clearAction = "清空记录",
+    noHandsHint = "还没有牌局记录。打完一手牌后会自动保存在这里，可以随时回来复盘。",
+    noSwitchInGame = "牌局进行中，结束后才能切换存档",
+    saveSlotCount = { a, b -> "$a / $b 个存档" },
+    careerTitleFor = { "$it 的生涯" },
+    newGame = "新牌局",
 )
 
 val EN = Strings(
@@ -431,6 +500,44 @@ val EN = Strings(
     winsFor = { if (it == "You") "You win" else "$it wins" },
     sound = "Sound effects",
     blindsUpNotice = { old, new -> "Blinds up  $old → $new\nSame chips, but fewer big blinds (BB)" },
+    saveDefaultName = { "Save $it" },
+    saves = "Saves",
+    switchSave = "Switch save",
+    newSave = "New save",
+    currentSave = "Current",
+    useSave = "Use this save",
+    rename = "Rename",
+    deleteSave = "Delete save",
+    deleteSaveTitle = { "Delete \"$it\"?" },
+    deleteSaveText = "Its hand history, stats and achievements will be deleted for good. This can't be undone.",
+    keep = "Keep",
+    saveName = "Save name",
+    create = "Create",
+    saveAction = "Save",
+    slotsFull = { "You can have up to $it saves. Delete one to make a new one." },
+    achievements = "Achievements",
+    unlockedCount = { a, b -> "$a of $b unlocked" },
+    achievementUnlocked = "Achievement unlocked",
+    unlockedOn = { "Unlocked $it" },
+    categoryName = { when (it) {
+        com.riverrunner.engine.AchCategory.START -> "Getting started"
+        com.riverrunner.engine.AchCategory.SKILL -> "Skill"
+        com.riverrunner.engine.AchCategory.HANDS -> "Big hands"
+        com.riverrunner.engine.AchCategory.TOURNAMENT -> "Tournaments"
+        com.riverrunner.engine.AchCategory.CASH -> "Cash games"
+        com.riverrunner.engine.AchCategory.STUDY -> "Study"
+    } },
+    handsLabel = "Hands",
+    cashBBLabel = "Cash BB",
+    titlesLabel = "Titles",
+    leaveTable = "Leave table",
+    keepPlaying = "Keep playing",
+    clearAction = "Clear history",
+    noHandsHint = "No hands yet. Every hand you play is saved here so you can replay it later.",
+    noSwitchInGame = "Finish the current game to switch saves",
+    saveSlotCount = { a, b -> "$a of $b saves" },
+    careerTitleFor = { "$it's career" },
+    newGame = "New game",
 )
 
 val LocalStrings = staticCompositionLocalOf { ZH }

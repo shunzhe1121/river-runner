@@ -16,6 +16,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.riverrunner.ui.AppViewModel
 import com.riverrunner.ui.GuideScreen
+import com.riverrunner.ui.SavesScreen
+import com.riverrunner.ui.AchievementsScreen
+import com.riverrunner.ui.UnlockToast
+import androidx.compose.ui.Alignment
 import com.riverrunner.ui.HistoryScreen
 import com.riverrunner.ui.HomeScreen
 import com.riverrunner.ui.Palette
@@ -49,7 +53,10 @@ class MainActivity : ComponentActivity() {
                             Screen.Stats -> StatsScreen(vm)
                             Screen.Settings -> SettingsScreen(vm)
                             Screen.Guide -> GuideScreen(vm)
+                            Screen.Saves -> SavesScreen(vm)
+                            Screen.Achievements -> AchievementsScreen(vm)
                         }
+                        UnlockToast(vm.unlockToast, Modifier.align(Alignment.TopCenter))
                     }
                 }
             }

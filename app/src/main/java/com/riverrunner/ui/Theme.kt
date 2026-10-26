@@ -9,7 +9,7 @@ import com.riverrunner.i18n.Strings
 
 @Composable
 fun RiverTheme(strings: Strings, content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = darkColorScheme(primary = Palette.Gold, background = Palette.Bg, surface = Palette.Panel)) {
+    MaterialTheme(colorScheme = darkColorScheme(primary = Palette.Accent, onPrimary = Palette.Ink, secondary = Palette.Accent, background = Palette.Bg, surface = Palette.Panel)) {
         CompositionLocalProvider(LocalStrings provides strings) { content() }
     }
 }

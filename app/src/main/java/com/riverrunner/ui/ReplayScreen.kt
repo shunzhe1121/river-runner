@@ -176,7 +176,7 @@ fun ReplayContent(record: HandRecord, fmt: (Int) -> String, onBack: () -> Unit, 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SmallButton("←", onBack)
                 Text(
-                    "  ${st.replay} · ${com.riverrunner.engine.Stats.positionOf(record)}", color = Palette.Gold, fontSize = 14.sp,
+                    "  ${st.replay} · ${com.riverrunner.engine.Stats.positionOf(record)}", color = Palette.Text, fontSize = 15.sp,
                     fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1,
                 )
                 Text(
@@ -217,7 +217,7 @@ private fun AnalysisCard(heroAction: Action, decided: Boolean, policy: Policy?, 
                 "$name ${Format.pct(p)}"
             }
         }
-        Text("${st.gtoSuggest}: " + parts.joinToString(" · "), color = Palette.Gold, fontSize = 12.sp)
+        Text("${st.gtoSuggest}: " + parts.joinToString(" / "), color = Palette.Accent, fontSize = 13.sp)
         if (decided) {
             val t = when (heroAction.type) {
                 ActionType.FOLD -> MoveType.FOLD; ActionType.CHECK -> MoveType.CHECK

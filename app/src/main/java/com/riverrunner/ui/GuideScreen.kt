@@ -64,14 +64,15 @@ fun GuideContent(onClose: () -> Unit, startTab: GuideTab = GuideTab.BASICS) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SmallButton("←", onClose)
                 Spacer(Modifier.width(8.dp))
-                Text(st.guide, color = Palette.Gold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(st.guide, color = Palette.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(4.dp))
             for (t in GuideTab.entries) {
                 val sel = t == tab
                 Box(
                     Modifier.fillMaxWidth().pressable { tab = t }.clip(RoundedCornerShape(8.dp))
-                        .background(if (sel) Palette.GoldDim else Palette.Panel)
+                        .background(if (sel) Palette.AccentDim else Palette.Panel)
+                        .then(if (sel) Modifier.border(1.dp, Palette.Accent, RoundedCornerShape(8.dp)) else Modifier)
                         .padding(horizontal = 10.dp, vertical = 8.dp),
                 ) { Text(tabTitle(t, zh), color = Palette.Text, fontSize = 13.sp, fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal) }
             }
@@ -103,7 +104,7 @@ private fun tabTitle(t: GuideTab, zh: Boolean) = when (t) {
 }
 
 @Composable
-private fun H(text: String) = Text(text, color = Palette.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+private fun H(text: String) = Text(text, color = Palette.Text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
 
 @Composable
 private fun P(text: String) = Text(text, color = Palette.Text, fontSize = 13.sp, lineHeight = 20.sp)
@@ -173,7 +174,7 @@ private fun Steps(items: List<Pair<String, String>>) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         for ((i, it) in items.withIndex()) {
             Row {
-                Box(Modifier.size(20.dp).clip(CircleShape).background(Palette.GoldDim), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(22.dp).clip(CircleShape).background(Palette.AccentDim), contentAlignment = Alignment.Center) {
                     Text("${i + 1}", color = Palette.Text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
@@ -211,7 +212,7 @@ private fun Rankings(zh: Boolean) {
             Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.PanelHi).padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("${i + 1}", color = Palette.Gold, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
+            Text("${i + 1}", color = Palette.Accent, fontSize = 18.sp, fontFamily = Numeric, fontWeight = FontWeight.Bold, modifier = Modifier.width(24.dp))
             Column(Modifier.width(118.dp)) {
                 Text(if (zh) r.zh else r.en, color = Palette.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(if (zh) r.zhDesc else r.enDesc, color = Palette.TextDim, fontSize = 10.sp, lineHeight = 13.sp)
@@ -354,13 +355,13 @@ private fun Glossary(zh: Boolean) {
     for (t in TERMS) {
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.PanelHi).padding(horizontal = 10.dp, vertical = 6.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(if (zh) t.zh else t.en, color = Palette.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(if (zh) t.zh else t.en, color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 if (t.full.isNotEmpty()) {
                     Spacer(Modifier.width(8.dp))
-                    Text(t.full, color = Palette.Blue, fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                    Text(t.full, color = Palette.Accent, fontSize = 12.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
                 }
             }
-            Text(if (zh) t.zhDesc else t.enDesc, color = Palette.Text, fontSize = 12.sp, lineHeight = 18.sp)
+            Text(if (zh) t.zhDesc else t.enDesc, color = Palette.TextDim, fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
 }

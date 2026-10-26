@@ -317,7 +317,7 @@ private fun ThinkingBar(key: Int, durationMs: Long, modifier: Modifier) {
         if (durationMs > 0) p.animateTo(1f, tween(durationMs.toInt(), easing = LinearEasing))
     }
     Box(modifier.height(3.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x33FFFFFF))) {
-        Box(Modifier.fillMaxHeight().fillMaxWidth(p.value).background(Palette.Gold))
+        Box(Modifier.fillMaxHeight().fillMaxWidth(p.value).background(Palette.Accent))
     }
 }
 
@@ -332,7 +332,7 @@ private fun ActionBadge(text: String?, kind: ActKind?, gold: Boolean = false) {
     ) { txt ->
         if (txt != null) {
             Text(
-                txt, color = if (gold) Color(0xFF1A1405) else Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                txt, color = if (gold) Palette.Ink else Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                 modifier = Modifier.clip(RoundedCornerShape(50))
                     .background(if (gold) Palette.Gold else actColor(kind))
                     .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(50))
@@ -356,13 +356,13 @@ private fun PodFrame(s: SeatUi, pulse: Float, modifier: Modifier, content: @Comp
     val shape = RoundedCornerShape(12.dp)
     val borderColor = when {
         s.won > 0 -> Palette.Gold
-        s.isActing -> Palette.Gold.copy(alpha = pulse)
+        s.isActing -> Palette.Accent.copy(alpha = pulse)
         else -> Color(0x33FFFFFF)
     }
     val borderW = if (s.isActing || s.won > 0) 2.dp else 1.dp
     Box(
         modifier
-            .shadow(if (s.isActing || s.won > 0) 10.dp else 3.dp, shape, ambientColor = Palette.Gold, spotColor = if (s.isActing || s.won > 0) Palette.Gold else Color.Black)
+            .shadow(if (s.isActing || s.won > 0) 10.dp else 3.dp, shape, ambientColor = if (s.won > 0) Palette.Gold else Palette.Accent, spotColor = if (s.won > 0) Palette.Gold else if (s.isActing) Palette.Accent else Color.Black)
             .clip(shape)
             .background(Brush.verticalGradient(listOf(Color(0xF2223129), Color(0xF2141D18))))
             .border(borderW, borderColor, shape),
@@ -377,10 +377,10 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
         PodFrame(s, pulse, Modifier.size(g.podW.dp, g.podH.dp).alpha(dimAlpha)) {
             Row(Modifier.fillMaxSize().padding(start = 8.dp, end = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(s.name, color = Palette.Text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(s.name, color = Palette.Text, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
                         if (s.busted) "—" else fmt(s.stack), maxLines = 1,
-                        color = if (s.allIn && !s.busted) Palette.Red else Palette.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        color = if (s.allIn && !s.busted) Palette.Red else Palette.Gold, fontSize = 17.sp, lineHeight = 18.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold,
                     )
                 }
                 val hole = s.hole
@@ -412,7 +412,7 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
         val posText = listOfNotNull(s.position.takeIf { it.isNotEmpty() }, s.tag).joinToString(" · ")
         if (posText.isNotEmpty()) {
             Text(
-                posText, color = Palette.TextDim, fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                posText, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                 modifier = Modifier.align(Alignment.BottomStart).offset(x = 12.dp, y = (-2).dp)
                     .clip(RoundedCornerShape(4.dp)).background(Color(0xCC0B1210)).padding(horizontal = 4.dp),
             )
@@ -428,14 +428,14 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
 private fun WonOrEquity(s: SeatUi, fmt: (Int) -> String) {
     AnimatedVisibility(s.won > 0, enter = scaleIn(tween(300, 550)) + fadeIn(tween(300, 550)), exit = fadeOut()) {
         Text(
-            "+" + fmt(s.won), color = Color(0xFF06140C), fontSize = 11.sp, fontWeight = FontWeight.Black, maxLines = 1,
+            "+" + fmt(s.won), color = Palette.Ink, fontSize = 14.sp, fontFamily = Numeric, fontWeight = FontWeight.Bold, maxLines = 1,
             modifier = Modifier.clip(RoundedCornerShape(50)).background(Palette.Green).padding(horizontal = 6.dp, vertical = 1.dp),
         )
     }
     val eq = s.equity
     if (eq != null && s.won == 0) {
         Text(
-            "%.1f%%".format(eq * 100), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+            "%.1f%%".format(eq * 100), color = Color.White, fontSize = 14.sp, fontFamily = Numeric, fontWeight = FontWeight.Bold, maxLines = 1,
             modifier = Modifier.clip(RoundedCornerShape(50)).background(Palette.Blue).padding(horizontal = 6.dp, vertical = 1.dp),
         )
     }
@@ -486,7 +486,7 @@ private fun HeroSeat(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Stri
                     }
                     Text(
                         if (s.busted) "—" else fmt(s.stack), color = if (s.allIn) Palette.Red else Palette.Gold,
-                        fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                        fontSize = 19.sp, lineHeight = 20.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1,
                     )
                 }
             }

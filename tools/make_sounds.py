@@ -166,6 +166,14 @@ def blinds_up():
     return buf
 
 
+def unlock():
+    """Achievement unlocked: a quick rising sparkle of bells."""
+    buf = np.zeros(int(SR * 1.2))
+    for i, f in enumerate([1568.0, 2093.0, 2637.0, 3136.0]):   # G6 C7 E7 G7
+        place(buf, bell(f, 0.8, 0.6 - i * 0.08), i * 0.06)
+    return buf
+
+
 def click():
     tt = t(0.03)
     return np.sin(2 * np.pi * 3200 * tt) * np.exp(-tt / 0.004) + highp(rng.standard_normal(len(tt)), 4000) * np.exp(-tt / 0.0015) * 0.4
@@ -184,3 +192,4 @@ if __name__ == "__main__":
     save("allin", allin(), 0.85)
     save("blinds", blinds_up(), 0.6)
     save("click", click(), 0.35)
+    save("unlock", unlock(), 0.6)

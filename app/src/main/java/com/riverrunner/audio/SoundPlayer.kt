@@ -6,7 +6,7 @@ import android.media.SoundPool
 import com.riverrunner.R
 import kotlin.random.Random
 
-enum class Sound { DEAL, FLIP, CHIP, COLLECT, CHECK, FOLD, TURN, WIN, ALLIN, BLINDS, CLICK }
+enum class Sound { DEAL, FLIP, CHIP, COLLECT, CHECK, FOLD, TURN, WIN, ALLIN, BLINDS, CLICK, UNLOCK }
 
 /** Short game sounds (synthesised by tools/make_sounds.py) played through a SoundPool. */
 class SoundPlayer(context: Context) {
@@ -32,6 +32,7 @@ class SoundPlayer(context: Context) {
         Sound.ALLIN to R.raw.sfx_allin,
         Sound.BLINDS to R.raw.sfx_blinds,
         Sound.CLICK to R.raw.sfx_click,
+        Sound.UNLOCK to R.raw.sfx_unlock,
     ).mapValues { (_, res) -> pool.load(context, res, 1) }
 
     var enabled = true
