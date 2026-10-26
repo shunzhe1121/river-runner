@@ -188,7 +188,7 @@ private fun SidePanel(
                 Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     val info = ui.practiceInfo
                     if (ui.practice && info != null) PracticeHud(info, fmt)
-                    ActionLog(ui.log, Modifier.weight(1f))
+                    else ActionLog(ui.log, Modifier.weight(1f))
                 }
             }
         }
@@ -245,7 +245,7 @@ private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
             HudRow(st.potOdds, "1 : %.1f".format(info.pot.toDouble() / info.toCall), st.needEquity, Format.pct(info.potOdds))
         }
         HudRow(st.spr, "%.1f".format(info.spr), null, null)
-        Text("${st.yourHand}: ${info.handText}", color = Color(0xFFBFD8F2), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Text("${st.yourHand}: ${info.handText}", color = Color(0xFFBFD8F2), fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -253,14 +253,14 @@ private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
 private fun HudRow(l1: String, v1: String, l2: String?, v2: String?) {
     Row(Modifier.fillMaxWidth()) {
         Row(Modifier.weight(1f)) {
-            Text(l1, color = Palette.TextDim, fontSize = 10.sp, modifier = Modifier.weight(1f), maxLines = 1)
-            Text(v1, color = Palette.Text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(l1, color = Palette.TextDim, fontSize = 10.sp, lineHeight = 14.sp, modifier = Modifier.weight(1f), maxLines = 1)
+            Text(v1, color = Palette.Text, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
         }
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f)) {
             if (l2 != null && v2 != null) {
-                Text(l2, color = Palette.TextDim, fontSize = 10.sp, modifier = Modifier.weight(1f), maxLines = 1)
-                Text(v2, color = Palette.Text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(l2, color = Palette.TextDim, fontSize = 10.sp, lineHeight = 14.sp, modifier = Modifier.weight(1f), maxLines = 1)
+                Text(v2, color = Palette.Text, fontSize = 11.sp, lineHeight = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             }
         }
     }

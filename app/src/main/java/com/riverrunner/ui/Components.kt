@@ -184,12 +184,12 @@ fun ActionButton(
                 else Brush.verticalGradient(listOf(color.copy(alpha = 0.3f), color.copy(alpha = 0.3f)))
             )
             .border(1.dp, Color(0x40FFFFFF), RoundedCornerShape(10.dp))
-            .padding(horizontal = 6.dp, vertical = 6.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text, color = if (enabled) Palette.Text else Palette.TextDim, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
-            if (sub != null) Text(sub, color = Palette.Text.copy(alpha = 0.85f), fontSize = 11.sp, maxLines = 1)
+            Text(text, color = if (enabled) Palette.Text else Palette.TextDim, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
+            if (sub != null) Text(sub, color = Palette.Text.copy(alpha = 0.9f), fontSize = 11.sp, lineHeight = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
