@@ -69,8 +69,8 @@ fun HomeScreen(vm: AppViewModel) {
     var ante by remember { mutableStateOf(p.lastAnte) }
     val stackOptions = if (mode == GameMode.CASH) listOf(50, 100, 150, 200) else listOf(20, 30, 50, 75, 100)
 
-    Row(Modifier.fillMaxSize().background(Palette.Bg).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        Column(Modifier.width(300.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(Modifier.fillMaxSize().background(Palette.Bg).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.width(300.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text("River Runner", color = Palette.Text, fontSize = 30.sp, lineHeight = 30.sp, fontFamily = Numeric, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(10.dp))
@@ -85,18 +85,17 @@ fun HomeScreen(vm: AppViewModel) {
                 st.saves to { vm.screen = Screen.Saves },
                 st.settings to { vm.screen = Screen.Settings },
             )
-            tiles.chunked(2).forEach { row ->
+            tiles.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { (label, go) -> NavItem(label, Modifier.weight(1f), highlight = label == st.guide && vm.profile.counter(com.riverrunner.engine.Progress.HANDS) < 20, onClick = go) }
                 }
             }
         }
         Column(
-            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(Palette.Panel).padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(Palette.Panel).padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(st.newGame, color = Palette.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 OptionRow(st.mode) {
                     Pill(st.cash, mode == GameMode.CASH, { mode = GameMode.CASH; if (stackBB !in listOf(50, 100, 150, 200)) stackBB = 100 })
                     Pill(st.tournament, mode == GameMode.TOURNAMENT, { mode = GameMode.TOURNAMENT; if (stackBB !in listOf(20, 30, 50, 75, 100)) stackBB = 50 })
@@ -126,7 +125,7 @@ fun HomeScreen(vm: AppViewModel) {
                     }
                 }
             }
-            ActionButton(st.start, Palette.Accent, textColor = Palette.Ink, modifier = Modifier.fillMaxWidth().height(50.dp)) {
+            ActionButton(st.start, Palette.Accent, textColor = Palette.Ink, modifier = Modifier.fillMaxWidth().height(48.dp)) {
                 p.lastMode = mode; p.lastSize = size; p.lastStackBB = stackBB
                 p.lastTableType = table; p.lastHandsPerLevel = hpl; p.lastAnte = ante
                 vm.startGame(
@@ -143,12 +142,12 @@ fun HomeScreen(vm: AppViewModel) {
 @Composable
 private fun NavItem(text: String, modifier: Modifier, highlight: Boolean = false, onClick: () -> Unit) {
     Box(
-        modifier.pressable(onClick = onClick).height(46.dp).clip(RoundedCornerShape(10.dp))
+        modifier.pressable(onClick = onClick).height(48.dp).clip(RoundedCornerShape(10.dp))
             .background(if (highlight) Palette.AccentDim else Palette.Panel)
             .then(if (highlight) Modifier.border(1.dp, Palette.Accent, RoundedCornerShape(10.dp)) else Modifier)
-            .padding(horizontal = 14.dp),
-        contentAlignment = Alignment.CenterStart,
-    ) { Text(text, color = Palette.Text, fontSize = 15.sp, maxLines = 1) }
+            .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) { Text(text, color = Palette.Text, fontSize = 14.sp, maxLines = 1) }
 }
 
 @Composable

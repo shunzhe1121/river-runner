@@ -492,6 +492,7 @@ private fun HeroControls(la: LegalActions, fmt: (Int) -> String, bb: Int, onMove
                     },
                     if (isAllIn) Palette.AllInBtn else Palette.RaiseBtn,
                     sub = fmt(target),
+                    textColor = if (isAllIn) Palette.Text else Palette.Ink,
                     modifier = Modifier.weight(if (la.canCheck) 1.4f else 1.2f).fillMaxHeight(),
                 ) { onMove(Move.raiseTo(target)) }
             }

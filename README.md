@@ -20,6 +20,8 @@ A personal, fully offline Texas Hold'em trainer for Android — drill your range
 | Stats / 统计 | VPIP, PFR, 3-Bet, WTSD, W$SD, BB/100, results by position, career totals / 入池率、加注率、摊牌率等 |
 | Table feel / 牌桌体验 | Dealing and card-flip animations, chips sliding to the pot and to the winner, pulsing turn indicator with a "thinking" bar, vibration on your turn, live action log; every hand waits for **Next hand** so you can read the showdown / 发牌翻牌动画、筹码动画、行动提示与震动、行动记录；每手结束等你点"下一手" |
 | Beginner guide / 新手指南 | Rules, hand rankings, positions, glossary of terms, beginner tips — also reachable from the table via **?** / 玩法、牌型、位置、术语、新手建议，牌桌上点 ? 也能打开 |
+| Saves / 存档 | Up to 6 save slots, each with its own career stats, hand history and achievements; create, switch, rename, delete / 最多 6 个存档，各自独立的生涯统计、牌局记录和成就，可新建、切换、重命名、删除 |
+| Achievements / 成就 | 30 achievements across getting started, skill (blind steals, river bluffs, suck-outs), big hands, tournaments, cash games and study / 30 个成就：起步、技术、牌型、锦标赛、筹码局、学习 |
 | Language / 语言 | 中文 / English, switchable in-app |
 
 ## How the bots decide / NPC 如何决策
@@ -47,6 +49,8 @@ Project layout:
 
 - `engine/` — pure Kotlin poker engine (no Android dependency): hand evaluator, NLHE state machine with side pots, bots, equity, ICM, hand records and replay, stats.
 - `app/` — Jetpack Compose UI (landscape).
+
+Visual rules (colour roles, type, motion, copy) are documented in [DESIGN.md](DESIGN.md). Barlow Condensed is bundled under the SIL Open Font License (`licenses/`).
 
 UI screenshots are rendered on the JVM (Robolectric + Roborazzi, `./gradlew :app:recordRoborazziDebug`) and CI publishes them to the [`screenshots`](https://github.com/shunzhe1121/river-runner/tree/screenshots) branch, so layout changes can be reviewed without a device.
 
