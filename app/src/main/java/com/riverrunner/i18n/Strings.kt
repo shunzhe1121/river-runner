@@ -140,6 +140,7 @@ data class Strings(
     val overPair: String,
     val boardPair: String,
     val set: String,
+    val winsFor: (String) -> String,
 )
 
 val ZH = Strings(
@@ -281,6 +282,7 @@ val ZH = Strings(
     overPair = "超对",
     boardPair = "公共牌对子（你只有高牌）",
     set = "暗三条",
+    winsFor = { "$it 赢得" },
 )
 
 val EN = Strings(
@@ -422,6 +424,7 @@ val EN = Strings(
     overPair = "Overpair",
     boardPair = "Paired board (you have high card)",
     set = "Set of",
+    winsFor = { if (it == "You") "You win" else "$it wins" },
 )
 
 val LocalStrings = staticCompositionLocalOf { ZH }

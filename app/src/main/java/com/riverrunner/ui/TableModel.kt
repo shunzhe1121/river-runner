@@ -209,11 +209,11 @@ object TableMapper {
         val amount = res.pots.filter { it.winners == main.winners }.sumOf { it.amount }
         val per = amount / main.winners.size
         return if (res.showdown.isEmpty()) {
-            "$winners ${st.wins} ${fmt(per)} · ${st.othersFolded}"
+            "${st.winsFor(winners)} ${fmt(per)} · ${st.othersFolded}"
         } else {
             val name = res.scores[main.winners.first()]?.let { HandEvaluator.categoryName(it, st.isZh) } ?: ""
             if (main.winners.size > 1) "$winners ${st.split} ${fmt(amount)} · $name"
-            else "$winners ${st.wins} ${fmt(per)} · $name"
+            else "${st.winsFor(winners)} ${fmt(per)} · $name"
         }
     }
 

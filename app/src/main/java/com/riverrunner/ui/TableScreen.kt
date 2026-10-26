@@ -324,7 +324,7 @@ private fun HandOverPanel(over: HandOverUi, fmt: (Int) -> String) {
             )
         }
         for (w in over.winners) {
-            Text("🏆 ${w.name} ${st.wins} ${fmt(w.amount)}", color = Palette.Text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text("🏆 ${st.winsFor(w.name)} ${fmt(w.amount)}", color = Palette.Text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
         if (over.byFold) Text(st.othersFolded, color = Palette.TextDim, fontSize = 11.sp)
         if (over.showdown.isNotEmpty()) {
