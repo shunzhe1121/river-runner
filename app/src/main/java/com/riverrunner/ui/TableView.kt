@@ -101,14 +101,14 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
         val x = cx + w * 0.405f * cos(ang).toFloat()
         val y = cy + h * 0.45f * sin(ang).toFloat()
         return Offset(
-            x.coerceIn(podW / 2 + 2f, w - podW / 2 - 2f),
-            y.coerceIn(podH / 2 + 12f, h - podH / 2 - 14f),
+            x.coerceIn(podW / 2 + 8f, w - podW / 2 - 4f),
+            y.coerceIn(podH / 2 + 20f, h - podH / 2 - 18f),
         )
     }
 
     /** Where a seat's bet sits: just outside its pod, towards the middle, never over the board. */
     fun betPos(rel: Int): Offset {
-        if (rel == 0) return Offset(cx, heroCardsTop - 14f)
+        if (rel == 0) return Offset(cx, heroCardsTop - 28f)
         val s = seatCenter(rel)
         val dx = cx - s.x
         val dy = cy - s.y
@@ -116,7 +116,7 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
         val ux = dx / len
         val uy = dy / len
         val tx = if (abs(ux) < 1e-3f) Float.MAX_VALUE else (podW / 2) / abs(ux)
-        val ty = if (abs(uy) < 1e-3f) Float.MAX_VALUE else (podH / 2 + 10f) / abs(uy)
+        val ty = if (abs(uy) < 1e-3f) Float.MAX_VALUE else (podH / 2 + 18f) / abs(uy)
         val t = min(tx, ty) + 24f
         var x = s.x + ux * t
         var y = s.y + uy * t
@@ -373,7 +373,7 @@ private fun PodFrame(s: SeatUi, pulse: Float, modifier: Modifier, content: @Comp
 private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> String, dealDelay: Int, dealFrom: Offset, animateDeal: Boolean) {
     val pulse = actingPulse(s.isActing)
     val dimAlpha by animateFloatAsState(if (s.busted) 0.3f else if (s.folded) 0.5f else 1f, tween(300), label = "fold")
-    Box(Modifier.size((g.podW + 12).dp, (g.podH + 26).dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.size((g.podW + 12).dp, (g.podH + 36).dp), contentAlignment = Alignment.Center) {
         PodFrame(s, pulse, Modifier.size(g.podW.dp, g.podH.dp).alpha(dimAlpha)) {
             Row(Modifier.fillMaxSize().padding(start = 8.dp, end = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -403,9 +403,9 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
             }
         }
         // dealer button (top-left)
-        if (s.isButton) Box(Modifier.align(Alignment.TopStart).offset(x = 0.dp, y = 6.dp)) { DealerButton() }
+        if (s.isButton) Box(Modifier.align(Alignment.TopStart).offset(x = 0.dp, y = 11.dp)) { DealerButton() }
         // action / hand badge (top-centre)
-        Box(Modifier.align(Alignment.TopCenter).offset(y = 3.dp)) {
+        Box(Modifier.align(Alignment.TopCenter)) {
             ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null)
         }
         // position (+ style in replay) (bottom-left)
@@ -413,12 +413,12 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
         if (posText.isNotEmpty()) {
             Text(
                 posText, color = Palette.TextDim, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-                modifier = Modifier.align(Alignment.BottomStart).offset(x = 12.dp, y = (-6).dp)
-                    .clip(RoundedCornerShape(4.dp)).background(Color(0xFF0B1210)).padding(horizontal = 4.dp),
+                modifier = Modifier.align(Alignment.BottomStart).offset(x = 12.dp, y = (-2).dp)
+                    .clip(RoundedCornerShape(4.dp)).background(Color(0xCC0B1210)).padding(horizontal = 4.dp),
             )
         }
         // equity (replay) or winnings (bottom-right)
-        Box(Modifier.align(Alignment.BottomEnd).offset(x = (-8).dp, y = (-4).dp)) {
+        Box(Modifier.align(Alignment.BottomEnd).offset(x = (-8).dp, y = 0.dp)) {
             WonOrEquity(s, fmt)
         }
     }
