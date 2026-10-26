@@ -406,7 +406,7 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
         if (s.isButton) Box(Modifier.align(Alignment.TopStart).offset(x = 0.dp, y = 11.dp)) { DealerButton() }
         // action / hand badge (top-centre)
         Box(Modifier.align(Alignment.TopCenter)) {
-            ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null)
+            ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null && s.won > 0)
         }
         // position (+ style in replay) (bottom-left)
         val posText = listOfNotNull(s.position.takeIf { it.isNotEmpty() }, s.tag).joinToString(" · ")
@@ -467,7 +467,7 @@ private fun HeroSeat(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Stri
         val badgeAnchor = Offset(g.cx + g.heroCardsW / 2 + 52f, g.heroCardsTop + g.heroCardH / 2 + 8f)
         Box(Modifier.fillMaxSize().centerAt(badgeAnchor)) {
             Column(Modifier.width(96.dp), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null)
+                ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null && s.won > 0)
                 WonOrEquity(s, fmt)
             }
         }
