@@ -175,9 +175,9 @@ fun Modifier.pressable(enabled: Boolean = true, onClick: () -> Unit): Modifier {
 @Composable
 fun Pill(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
-        modifier.pressable(onClick = onClick).heightIn(min = 40.dp).clip(RoundedCornerShape(50))
+        modifier.pressable(onClick = onClick).heightIn(min = 38.dp).clip(RoundedCornerShape(50))
             .background(if (selected) Palette.Accent else Palette.PanelHi)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, color = if (selected) Palette.Ink else Palette.Text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
@@ -206,7 +206,7 @@ fun ActionButton(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text, color = if (enabled) textColor else Palette.TextDim, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
-            if (sub != null) Text(sub, color = Palette.Text.copy(alpha = 0.92f), fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            if (sub != null) Text(sub, color = textColor.copy(alpha = 0.92f), fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
