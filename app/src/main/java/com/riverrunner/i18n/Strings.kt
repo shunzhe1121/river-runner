@@ -136,6 +136,10 @@ data class Strings(
     val guide: String,
     val guideSub: String,
     val styles: String,
+    val topPair: String,
+    val overPair: String,
+    val boardPair: String,
+    val set: String,
 )
 
 val ZH = Strings(
@@ -273,6 +277,10 @@ val ZH = Strings(
     guide = "新手指南",
     guideSub = "玩法 · 牌型 · 位置 · 术语",
     styles = "风格",
+    topPair = "顶对",
+    overPair = "超对",
+    boardPair = "公共牌对子（你只有高牌）",
+    set = "暗三条",
 )
 
 val EN = Strings(
@@ -410,6 +418,10 @@ val EN = Strings(
     guide = "Beginner guide",
     guideSub = "Rules · rankings · positions · terms",
     styles = "Styles",
+    topPair = "Top pair",
+    overPair = "Overpair",
+    boardPair = "Paired board (you have high card)",
+    set = "Set of",
 )
 
 val LocalStrings = staticCompositionLocalOf { ZH }
