@@ -332,7 +332,7 @@ private val TERMS = listOf(
     Term("推/弃 Push/Fold", "筹码很短（约 15BB 以下）时，只选择全下或弃牌的打法。", "Push/fold", "With a short stack (under ~15 BB) you either go all-in or fold."),
     Term("VPIP", "主动入池率：翻牌前自愿投入筹码（跟注或加注）的比例。常规玩家 6 人桌约 20–28%。", "VPIP", "Voluntarily put money in pot preflop. Typical 6-max regulars: about 20–28%."),
     Term("PFR", "翻牌前加注率。和 VPIP 越接近，说明越少溜入/跟注，打法越主动。", "PFR", "Preflop raise percentage. The closer to VPIP, the more aggressive."),
-    Term("WTSD / W$SD", "看到翻牌后打到摊牌的比例 / 摊牌时赢钱的比例。", "WTSD / W$SD", "Went to showdown after seeing the flop / won money at showdown."),
+    Term("WTSD / W\$SD", "看到翻牌后打到摊牌的比例 / 摊牌时赢钱的比例。", "WTSD / W\$SD", "Went to showdown after seeing the flop / won money at showdown."),
     Term("BB/100", "每 100 手赢多少个大盲，衡量胜率的标准指标。", "BB/100", "Big blinds won per 100 hands — the standard win-rate measure."),
     Term("紧凶 / 松凶", "紧凶(TAG)：玩得少但下注主动；松凶(LAG)：玩得多且主动。", "TAG / LAG", "Tight-aggressive plays few hands but bets them; loose-aggressive plays many hands aggressively."),
     Term("跟注站 / 紧弱 / 疯子", "跟注站：什么都跟很少弃牌；紧弱：只玩好牌且被动；疯子：疯狂加注诈唬。", "Station / Nit / Maniac", "Station calls too much; nit plays only premium hands passively; maniac raises and bluffs constantly."),
