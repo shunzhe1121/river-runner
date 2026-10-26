@@ -35,6 +35,14 @@ class EvaluatorTest {
         // three pairs: best two plus best kicker
         assertEquals(s("AhAdKcKsQcQd2h"), s("AhAdKcKsQh3c2d"))
     }
+
+    @Test fun bestFive() {
+        val seven = Cards.parseMany("AhKh2c7hQh9dJh")
+        val five = HandEvaluator.bestFive(seven)
+        assertEquals(5, five.size)
+        assertEquals(HandEvaluator.evaluate(seven), HandEvaluator.evaluate(five))
+        assertTrue(five.all { Cards.suit(it) == 2 })
+    }
 }
 
 class EngineTest {
