@@ -30,7 +30,21 @@ jobs:
         run: ./gradlew :engine:test --no-daemon
 
       - name: Build release APK
-        run: ./gradlew :app:assembleRelease --no-daemon
+        run: |
+          ./gradlew :app:assembleRelease --no-daemon 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Report build errors
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          touch build.log
+          grep -E "^e: |What went wrong|Could not|error:" -A3 build.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+          mkdir -p /tmp/logs && cp build.log /tmp/logs/ && cd /tmp/logs && echo "${GITHUB_SHA}" > COMMIT
+          git init -q && git checkout -q -b ci-logs && git add -A
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -qm "build log ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-logs
 
       - name: Rename APK
         run: cp app/build/outputs/apk/release/app-release.apk river-runner-${VERSION_NAME}.apk
@@ -72,7 +86,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Render screenshots
-        run: ./gradlew :app:recordRoborazziDebug --no-daemon --stacktrace
+        run: |
+          ./gradlew :app:recordRoborazziDebug --no-daemon 2>&1 | tee render.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Report render errors
+        if: failure()
+        run: |
+          touch render.log
+          grep -E "^e: |What went wrong|FAILED|Exception" -A3 render.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done
 
       - name: Publish to screenshots branch
         if: always()
@@ -81,6 +103,7 @@ jobs:
         run: |
           mkdir -p /tmp/shots
           cp app/build/screenshots/*.png /tmp/shots/ 2>/dev/null || true
+          cp render.log /tmp/shots/ 2>/dev/null || true
           if [ -d app/build/reports/tests/testDebugUnitTest ]; then cp -r app/build/reports/tests/testDebugUnitTest /tmp/shots/test-report; fi
           cd /tmp/shots
           echo "${GITHUB_SHA}" > COMMIT
