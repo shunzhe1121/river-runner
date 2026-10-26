@@ -89,6 +89,9 @@ data class TableScreenUi(
     val heroInHand: Boolean,
     val fastForward: Boolean,
     val sessionOver: Boolean,
+    /** short message shown over the table, e.g. blinds going up */
+    val notice: String? = null,
+    val soundOn: Boolean = true,
 )
 
 /** Static info about a seat that lives outside a single hand. */

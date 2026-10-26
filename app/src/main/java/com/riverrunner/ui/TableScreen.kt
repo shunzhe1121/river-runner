@@ -93,6 +93,7 @@ fun TableScreen(vm: AppViewModel) {
         onPractice = { vm.practice = it },
         onExit = { confirmExit = true },
         onHelp = { showGuide = true },
+        onSound = { vm.setSound(!vm.soundOn) },
     )
     if (confirmExit) {
         AlertDialog(
@@ -121,6 +122,7 @@ fun TableContent(
     onExit: () -> Unit,
     onHelp: () -> Unit,
     animate: Boolean = true,
+    onSound: () -> Unit = {},
 ) {
     val st = LocalStrings.current
     val haptic = LocalHapticFeedback.current
@@ -132,8 +134,22 @@ fun TableContent(
         Box(Modifier.weight(1f).fillMaxHeight().padding(start = 4.dp, top = 4.dp, bottom = 2.dp)) {
             val t = ui.table
             if (t != null) PokerTable(t, fmt, st.pot, Modifier.fillMaxSize(), animateDeal = animate)
+            androidx.compose.animation.AnimatedVisibility(
+                ui.notice != null,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 64.dp),
+                enter = androidx.compose.animation.slideInVertically { -it } + fadeIn(),
+                exit = fadeOut(tween(400)),
+            ) {
+                Text(
+                    ui.notice ?: "", color = Color(0xFF1A1405), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center, lineHeight = 18.sp,
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Palette.Gold)
+                        .border(2.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
         }
-        SidePanel(ui, fmt, onMove, onNext, onFastForward, onPractice, onExit, onHelp)
+        SidePanel(ui, fmt, onMove, onNext, onFastForward, onPractice, onExit, onHelp, onSound)
     }
 }
 
@@ -147,6 +163,7 @@ private fun SidePanel(
     onPractice: (Boolean) -> Unit,
     onExit: () -> Unit,
     onHelp: () -> Unit,
+    onSound: () -> Unit,
 ) {
     val st = LocalStrings.current
     val heroTurn = ui.legal != null
@@ -164,6 +181,8 @@ private fun SidePanel(
                 Text(ui.blindsText, color = Palette.TextDim, fontSize = 10.sp, maxLines = 1)
                 if (ui.levelText != null) Text(ui.levelText, color = Palette.Gold.copy(alpha = 0.85f), fontSize = 10.sp, maxLines = 1)
             }
+            RoundIcon(if (ui.soundOn) "🔊" else "🔇", onSound)
+            Spacer(Modifier.width(4.dp))
             RoundIcon("?", onHelp)
             Spacer(Modifier.width(4.dp))
             RoundIcon("✕", onExit)
@@ -228,9 +247,9 @@ private fun pulse(): Float {
 @Composable
 private fun RoundIcon(text: String, onClick: () -> Unit) {
     Box(
-        Modifier.size(28.dp).pressable(onClick = onClick).clip(CircleShape).background(Palette.PanelHi),
+        Modifier.size(26.dp).pressable(onClick = onClick).clip(CircleShape).background(Palette.PanelHi),
         contentAlignment = Alignment.Center,
-    ) { Text(text, color = Palette.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+    ) { Text(text, color = Palette.Text, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
 }
 
 @Composable

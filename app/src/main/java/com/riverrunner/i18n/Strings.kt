@@ -141,6 +141,8 @@ data class Strings(
     val boardPair: String,
     val set: String,
     val winsFor: (String) -> String,
+    val sound: String,
+    val blindsUpNotice: (String, String) -> String,
 )
 
 val ZH = Strings(
@@ -283,6 +285,8 @@ val ZH = Strings(
     boardPair = "公共牌对子（你只有高牌）",
     set = "暗三条",
     winsFor = { "$it 赢得" },
+    sound = "音效",
+    blindsUpNotice = { old, new -> "盲注上涨  $old → $new\n筹码没变，但折合的大盲(BB)数会变少" },
 )
 
 val EN = Strings(
@@ -425,6 +429,8 @@ val EN = Strings(
     boardPair = "Paired board (you have high card)",
     set = "Set of",
     winsFor = { if (it == "You") "You win" else "$it wins" },
+    sound = "Sound effects",
+    blindsUpNotice = { old, new -> "Blinds up  $old → $new\nSame chips, but fewer big blinds (BB)" },
 )
 
 val LocalStrings = staticCompositionLocalOf { ZH }

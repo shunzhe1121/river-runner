@@ -373,6 +373,7 @@ fun SettingsScreen(vm: AppViewModel) {
                 }
                 ToggleRow(st.practiceDefault, practice) { practice = it; vm.prefs.practiceDefault = it }
                 ToggleRow(st.showInBB, vm.showInBB) { vm.setShowBB(it) }
+                ToggleRow(st.sound, vm.soundOn) { vm.setSound(it) }
                 ActionButton(st.clearHistory, Palette.FoldBtn, modifier = Modifier.fillMaxWidth()) { confirmClear = true }
             }
             Column(

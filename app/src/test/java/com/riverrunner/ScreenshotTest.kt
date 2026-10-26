@@ -218,6 +218,11 @@ class ScreenshotTest {
         table("10_english_six_showdown", s.ui(TableMapper.Stage.FINAL), EN)
     }
 
+    @Test fun t16_blinds_up_notice() {
+        val s = Scenario(ZH, 6, 5, listOf("Qh8s", "9c9d", "Kd4c", "7s2h", "AhJc", "Tc6d"), "Ks7d2c5hAs")
+        table("16_blinds_up_notice", s.ui().copy(notice = ZH.blindsUpNotice("100/200", "150/300")))
+    }
+
     @Test fun t11_guide_rankings() = shot("11_guide_rankings") { GuideContent(onClose = {}, startTab = GuideTab.RANKINGS) }
 
     @Test fun t12_guide_positions() = shot("12_guide_positions") { GuideContent(onClose = {}, startTab = GuideTab.POSITIONS) }

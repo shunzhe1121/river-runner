@@ -25,6 +25,10 @@ class Prefs(context: Context) {
         get() = sp.getInt("speed", 1)
         set(v) = sp.edit().putInt("speed", v).apply()
 
+    var sound: Boolean
+        get() = sp.getBoolean("sound", true)
+        set(v) = sp.edit().putBoolean("sound", v).apply()
+
     var showInBB: Boolean
         get() = sp.getBoolean("bb", true)
         set(v) = sp.edit().putBoolean("bb", v).apply()
