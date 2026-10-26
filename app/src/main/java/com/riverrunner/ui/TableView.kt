@@ -412,7 +412,7 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
         val posText = listOfNotNull(s.position.takeIf { it.isNotEmpty() }, s.tag).joinToString(" · ")
         if (posText.isNotEmpty()) {
             Text(
-                posText, color = Palette.TextDim, fontSize = 9.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                posText, color = Palette.TextDim, fontSize = 9.sp, lineHeight = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
                 modifier = Modifier.align(Alignment.BottomStart).offset(x = 12.dp, y = (-2).dp)
                     .clip(RoundedCornerShape(4.dp)).background(Color(0xCC0B1210)).padding(horizontal = 4.dp),
             )

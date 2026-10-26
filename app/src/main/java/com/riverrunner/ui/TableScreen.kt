@@ -188,7 +188,9 @@ private fun SidePanel(
                 Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     val info = ui.practiceInfo
                     if (ui.practice && info != null) PracticeHud(info, fmt)
-                    else ActionLog(ui.log, Modifier.weight(1f))
+                    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                        if (maxHeight > 36.dp) ActionLog(ui.log, Modifier.fillMaxSize())
+                    }
                 }
             }
         }

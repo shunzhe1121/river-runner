@@ -240,7 +240,24 @@ object TableMapper {
             return "$cls · ${st.topPercent(top)}"
         }
         val score = HandEvaluator.evaluate((board + hole.toList()).toIntArray())
-        return HandEvaluator.categoryName(score, st.isZh)
+        val cat = HandEvaluator.category(score)
+        val name = HandEvaluator.categoryName(score, st.isZh)
+        fun r(x: Int) = com.riverrunner.engine.Cards.RANKS[x].let { if (it == 'T') "10" else it.toString() }
+        val boardRanks = board.map { com.riverrunner.engine.Cards.rank(it) }
+        val h0 = com.riverrunner.engine.Cards.rank(hole[0]); val h1 = com.riverrunner.engine.Cards.rank(hole[1])
+        val boardCat = HandEvaluator.category(HandEvaluator.evaluate(board.toIntArray()))
+        val primary = (score ushr 16) and 0xF
+        return when {
+            cat == HandEvaluator.PAIR && boardCat == HandEvaluator.PAIR -> st.boardPair
+            cat == HandEvaluator.PAIR && h0 == h1 && h0 > boardRanks.max() -> "${st.overPair} ${r(h0)}"
+            cat == HandEvaluator.PAIR && primary == boardRanks.max() && (h0 == primary || h1 == primary) -> "${st.topPair} ${r(primary)}"
+            cat == HandEvaluator.PAIR -> "$name ${r(primary)}"
+            cat == HandEvaluator.TWO_PAIR -> "$name ${r(primary)} & ${r((score ushr 12) and 0xF)}"
+            cat == HandEvaluator.TRIPS && h0 == h1 -> "${st.set} ${r(primary)}"
+            cat == HandEvaluator.TRIPS -> "$name ${r(primary)}"
+            cat == HandEvaluator.HIGH_CARD -> "$name ${r(primary)}"
+            else -> name
+        }
     }
 
     fun streetLine(st: Strings, s: Street, board: List<Int>): LogLine {
