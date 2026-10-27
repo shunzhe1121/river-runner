@@ -298,6 +298,23 @@ class ScreenshotTest {
         shot("23_home_narrow") { HomeScreen(vm) }
     }
 
+    @Test @Config(qualifiers = "w720dp-h360dp-land-xxhdpi")
+    fun t24_eight_utg2_your_phone() {
+        // button 3: SB 4, BB 5, UTG 6, UTG+1 7, UTG+2 = you (0); UTG raises, UTG+1 folds
+        val s = Scenario(ZH, 8, 3, listOf("3c4c", "Kh5c", "9d9h", "Jc8c", "7h6h", "2c3d", "Td4s", "KcJd"), "Qd8s3hTs2s")
+        s.play(Move.raiseTo(250), Move.FOLD)
+        table("24_eight_utg2_your_phone", s.ui(practice = true).copy(levelText = ZH.levelText(1, 3)))
+    }
+
+    @Test @Config(qualifiers = "w720dp-h360dp-land-xxhdpi")
+    fun t25_eight_flop_your_phone() {
+        val s = Scenario(ZH, 8, 2, listOf("AsQs", "Kh5c", "9d9h", "Jc8c", "7h6h", "2c3d", "Td4s", "KcJd"), "Qd8s3hTs2s")
+        s.play(Move.FOLD, Move.CALL, Move.raiseTo(300), Move.CALL, Move.CALL, Move.FOLD, Move.CALL, Move.CALL, Move.CALL)
+        s.deal()
+        s.play(Move.raiseTo(200), Move.raiseTo(800), Move.CALL)
+        table("25_eight_flop_your_phone", s.ui())
+    }
+
     @Test fun t15_home() {
         val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
         shot("15_home") { HomeScreen(vm) }

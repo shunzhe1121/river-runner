@@ -86,16 +86,16 @@ object Achievements {
         a("hands_5000", AchCategory.START, "5K", Progress.HANDS, 5000, "牌桌常客", "累计打 5000 手牌", "Regular", "Play 5,000 hands"),
         a("pots_100", AchCategory.START, "$$", Progress.POTS_WON, 100, "百池赢家", "累计赢下 100 个底池", "Pot collector", "Win 100 pots"),
 
-        a("steal_10", AchCategory.SKILL, "偷", Progress.STEALS, 10, "偷盲贼", "在 CO、按钮或小盲开池加注，其他人全部弃牌，累计 10 次", "Blind thief", "Raise first from CO, button or small blind and take the blinds 10 times"),
-        a("river_bluff", AchCategory.SKILL, "唬", Progress.RIVER_BLUFFS, 1, "河牌诈唬", "河牌只有高牌，下注或加注把对手打跑", "River bluff", "Bet or raise the river with only high card and win without showdown"),
+        a("steal_10", AchCategory.SKILL, "偷", Progress.STEALS, 10, "偷盲贼", "后位开池加注，其他人全部弃牌，累计 10 次", "Blind thief", "Open from late position and take the blinds 10 times"),
+        a("river_bluff", AchCategory.SKILL, "唬", Progress.RIVER_BLUFFS, 1, "河牌诈唬", "河牌只有高牌，下注把对手打跑", "River bluff", "Bet the river with only high card and win"),
         a("bluff_10", AchCategory.SKILL, "演", Progress.RIVER_BLUFFS, 10, "诈唬大师", "河牌诈唬成功 10 次", "Bluff master", "Win 10 pots with river bluffs"),
         a("showdown_50", AchCategory.SKILL, "亮", Progress.SHOWDOWN_WINS, 50, "摊牌达人", "摊牌赢下 50 个底池", "Showdown pro", "Win 50 showdowns"),
         a("allin_win", AchCategory.SKILL, "全", Progress.ALLIN_WINS, 1, "孤注一掷", "全下后摊牌获胜", "All in", "Win a showdown after an all-in"),
-        a("suckout", AchCategory.SKILL, "逆", Progress.SUCKOUTS, 1, "逆天改命", "全下时胜率不到 35%，最后却赢了", "Lucky river", "Win an all-in where you had under 35% equity"),
+        a("suckout", AchCategory.SKILL, "逆", Progress.SUCKOUTS, 1, "逆天改命", "全下时胜率不到 35%，最后却赢了", "Lucky river", "Win an all-in with under 35% equity"),
         a("big_win", AchCategory.SKILL, "100", Progress.MAX_WIN_BB, 100, "一手百 BB", "一手牌净赢 100 BB 以上", "Monster pot", "Win 100 BB or more in a single hand"),
 
         a("pocket_aces", AchCategory.HANDS, "AA", Progress.DEALT_AA, 1, "口袋火箭", "拿到一对 A", "Pocket rockets", "Get dealt AA"),
-        a("won_72", AchCategory.HANDS, "72", Progress.WON_72, 1, "七二奇迹", "用最差的起手牌 7-2 不同花赢下底池", "The hammer", "Win a pot with 7-2 offsuit, the worst starting hand"),
+        a("won_72", AchCategory.HANDS, "72", Progress.WON_72, 1, "七二奇迹", "用最差起手牌 7-2 不同花赢下底池", "The hammer", "Win a pot with 7-2 offsuit"),
         a("full_house", AchCategory.HANDS, "葫", Progress.WON_FULL_HOUSE, 1, "满堂红", "用葫芦赢下摊牌", "Full house", "Win a showdown with a full house"),
         a("quads", AchCategory.HANDS, "四", Progress.WON_QUADS, 1, "四条", "用四条赢下摊牌", "Quads", "Win a showdown with four of a kind"),
         a("straight_flush", AchCategory.HANDS, "顺", Progress.WON_STRAIGHT_FLUSH, 1, "同花顺", "用同花顺赢下摊牌", "Straight flush", "Win a showdown with a straight flush"),
@@ -108,13 +108,13 @@ object Achievements {
         a("full_table", AchCategory.TOURNAMENT, "8", Progress.FULL_TABLE_TITLES, 1, "满桌通吃", "赢得一场 8 人锦标赛", "Full table", "Win an 8-player tournament"),
 
         a("cash_up_50", AchCategory.CASH, "+50", Progress.MAX_CASH_PROFIT_BB, 50, "满载而归", "一场筹码局结束时赢 50 BB 以上", "Good session", "Finish a cash session up 50 BB or more"),
-        a("double_up", AchCategory.CASH, "×2", Progress.CASH_DOUBLE_UPS, 1, "翻倍", "一场筹码局结束时筹码翻倍", "Double up", "Finish a cash session with double your starting stack"),
+        a("double_up", AchCategory.CASH, "×2", Progress.CASH_DOUBLE_UPS, 1, "翻倍", "一场筹码局结束时筹码翻倍", "Double up", "Double your stack in a cash session"),
         a("cash_10", AchCategory.CASH, "10", Progress.CASH_SESSIONS, 10, "常驻现金桌", "打完 10 场筹码局", "Cash regular", "Finish 10 cash sessions"),
 
         a("rocket_crash", AchCategory.FUN, "坠", Progress.LOST_WITH_AA, 1, "火箭坠毁", "拿着 AA 打到摊牌，结果输了", "Rockets crashed", "Lose a showdown holding pocket aces"),
-        a("duck_flew", AchCategory.FUN, "鸭", Progress.ALLIN_LOST_FAVOURITE, 1, "煮熟的鸭子飞了", "全下时胜率超过 80%，最后还是输了", "So close", "Lose an all-in where you had over 80% equity"),
-        a("bluff_caught", AchCategory.FUN, "抓", Progress.BLUFF_CAUGHT, 1, "诈唬被抓", "河牌只有高牌还下注，被跟注后输掉", "Caught bluffing", "Bet the river with only high card, get called and lose"),
-        a("kicker_pain", AchCategory.FUN, "踢", Progress.KICKER_LOSSES, 1, "输在踢脚", "和对手牌型一样，却输在踢脚上", "Out-kicked", "Lose a showdown with the same hand as your opponent, decided by the kicker"),
+        a("duck_flew", AchCategory.FUN, "鸭", Progress.ALLIN_LOST_FAVOURITE, 1, "煮熟的鸭子飞了", "全下时胜率超过 80%，最后还是输了", "So close", "Lose an all-in as an 80%+ favourite"),
+        a("bluff_caught", AchCategory.FUN, "抓", Progress.BLUFF_CAUGHT, 1, "诈唬被抓", "河牌只有高牌还下注，被跟注后输掉", "Caught bluffing", "Bet the river with air and get called"),
+        a("kicker_pain", AchCategory.FUN, "踢", Progress.KICKER_LOSSES, 1, "输在踢脚", "和对手牌型一样，却输在踢脚上", "Out-kicked", "Lose a showdown on the kicker"),
         a("zen_fold", AchCategory.FUN, "禅", Progress.MAX_FOLD_STREAK, 25, "老僧入定", "连续 25 手翻牌前直接弃牌", "Zen master", "Fold preflop 25 hands in a row"),
 
         a("guide", AchCategory.STUDY, "书", Progress.GUIDE_OPENED, 1, "好学生", "打开新手指南", "Good student", "Open the beginner guide"),

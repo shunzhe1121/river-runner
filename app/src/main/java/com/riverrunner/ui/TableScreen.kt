@@ -262,15 +262,18 @@ private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
     val st = LocalStrings.current
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Palette.PanelHi)
-            .padding(horizontal = 8.dp, vertical = 5.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         HudRow(st.pot, fmt(info.pot), st.toCall, if (info.toCall > 0) fmt(info.toCall) else "0")
         if (info.toCall > 0) {
             HudRow(st.potOdds, "1 : %.1f".format(info.pot.toDouble() / info.toCall), st.needEquity, Format.pct(info.potOdds))
         }
-        HudRow(st.spr, "%.1f".format(info.spr), null, null)
-        Text("${st.yourHand}: ${info.handText}", color = Palette.Accent, fontSize = 12.sp, lineHeight = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(info.handText, color = Palette.Gold, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = Modifier.weight(1f))
+            Text("${st.spr} ", color = Palette.TextDim, fontSize = 11.sp, lineHeight = 15.sp)
+            Text("%.1f".format(info.spr), color = Palette.Text, fontSize = 14.sp, lineHeight = 15.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
 
@@ -278,14 +281,14 @@ private fun PracticeHud(info: PracticeInfo, fmt: (Int) -> String) {
 private fun HudRow(l1: String, v1: String, l2: String?, v2: String?) {
     Row(Modifier.fillMaxWidth()) {
         Row(Modifier.weight(1f)) {
-            Text(l1, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 16.sp, modifier = Modifier.weight(1f), maxLines = 1)
-            Text(v1, color = Palette.Text, fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(l1, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 15.sp, modifier = Modifier.weight(1f), maxLines = 1)
+            Text(v1, color = Palette.Text, fontSize = 14.sp, lineHeight = 15.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
         Spacer(Modifier.width(8.dp))
         Row(Modifier.weight(1f)) {
             if (l2 != null && v2 != null) {
-                Text(l2, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 16.sp, modifier = Modifier.weight(1f), maxLines = 1)
-                Text(v2, color = Palette.Text, fontSize = 15.sp, lineHeight = 16.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(l2, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 15.sp, modifier = Modifier.weight(1f), maxLines = 1)
+                Text(v2, color = Palette.Text, fontSize = 14.sp, lineHeight = 15.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold, maxLines = 1)
             }
         }
     }

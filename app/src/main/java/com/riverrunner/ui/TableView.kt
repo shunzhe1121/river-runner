@@ -78,11 +78,14 @@ import kotlin.math.sin
 
 /** All positions on the table in dp, for a table area of [w] x [h] with [n] seats (hero at the bottom). */
 class TableGeometry(val w: Float, val h: Float, val n: Int) {
+    /** 7-8 players or a narrow table: smaller seats and board */
+    val crowded = n >= 7 || w < 520f
     val cx = w / 2f
-    val cy = h * 0.42f
-    val podW = 118f
-    val podH = 48f
-    val boardCardW = if (w < 520f || h < 320f) 34f else 38f
+    val cy = h * 0.43f
+    val podW = if (crowded) 100f else 112f
+    val podH = 46f
+    val miniCardW = if (crowded) 22f else 24f
+    val boardCardW = if (crowded) 32f else if (w < 520f || h < 320f) 34f else 38f
     val boardCardH = boardCardW * 1.4f
     val boardGap = 4f
     val boardW = boardCardW * 5 + boardGap * 4
@@ -92,14 +95,19 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
     val heroCardH = heroCardW * 1.4f
     val heroCardsW = heroCardW * 1.8f
     val heroPod = Offset(cx, h - podH / 2 - 2f)
-    val heroCardsTop = heroPod.y - podH / 2 + 10f - heroCardH
-    val potCenter = Offset(cx, boardTop - 15f)
+    val heroPodTop = heroPod.y - podH / 2
+    val heroCardsTop = heroPodTop + 10f - heroCardH
+    /** the pot pill sits on the lower edge of the board */
+    val potCenter = Offset(cx, boardBottom - 1f)
     val bannerCenter = Offset(cx, boardBottom + 16f)
+    /** hero's action badge (right of the cards, on the pod's top edge) and winnings badge (left) */
+    val heroBadgeRight = Offset(cx + heroCardsW / 2 + 50f, heroPodTop - 9f)
+    val heroBadgeLeft = Offset(cx - heroCardsW / 2 - 46f, heroPodTop - 9f)
 
     fun seatCenter(rel: Int): Offset {
         if (rel == 0) return heroPod
         val ang = Math.toRadians(90.0 + rel * 360.0 / n)
-        val x = cx + w * 0.405f * cos(ang).toFloat()
+        val x = cx + (w / 2 - podW / 2 - 6f) * cos(ang).toFloat()
         val y = cy + h * 0.45f * sin(ang).toFloat()
         return Offset(
             x.coerceIn(podW / 2 + 8f, w - podW / 2 - 4f),
@@ -107,54 +115,88 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
         )
     }
 
-    /** Where a seat's bet sits: just outside its pod, towards the middle, never over the board. */
-    fun betPos(rel: Int): Offset {
-        if (rel == 0) return Offset(cx, heroCardsTop - 28f)
-        val s = seatCenter(rel)
-        val dx = cx - s.x
-        val dy = cy - s.y
-        val len = hypot(dx, dy).coerceAtLeast(1f)
-        val ux = dx / len
-        val uy = dy / len
-        val tx = if (abs(ux) < 1e-3f) Float.MAX_VALUE else (podW / 2) / abs(ux)
-        val ty = if (abs(uy) < 1e-3f) Float.MAX_VALUE else (podH / 2 + 18f) / abs(uy)
-        val t = min(tx, ty) + 24f
-        var x = s.x + ux * t
-        var y = s.y + uy * t
-        val hw = 34f
-        val hh = 11f
-        val bl = cx - boardW / 2 - 4f
-        val br = cx + boardW / 2 + 4f
-        // board overlap -> move above or below the board
-        if (x + hw > bl && x - hw < br && y + hh > boardTop - 2f && y - hh < boardBottom + 2f) {
-            y = if (s.y <= cy) boardTop - hh - 4f else boardBottom + hh + 4f
-        }
-        // pot label overlap -> push sideways
-        val pl = cx - 56f
-        val pr = cx + 56f
-        if (x + hw > pl && x - hw < pr && abs(y - potCenter.y) < 22f) {
-            x = if (s.x < cx) pl - hw - 2f else pr + hw + 2f
-        }
-        return Offset(x.coerceIn(hw, w - hw), y.coerceIn(hh, h - hh))
-    }
+    private class Box4(val l: Float, val t: Float, val r: Float, val b: Float)
 
-    /** Bet spots for every seat, pushed apart so no two chips ever overlap. */
-    fun betSpots(): List<Offset> {
-        val spots = (0 until n).map { betPos(it) }.toMutableList()
-        val minDx = 72f
-        val minDy = 26f
-        repeat(4) {
-            for (j in 1 until n) for (i in 0 until j) {
-                val a = spots[i]
-                val b = spots[j]
-                if (abs(a.x - b.x) < minDx && abs(a.y - b.y) < minDy) {
-                    // slide the later chip sideways, away from the earlier one (towards its own seat side)
-                    val dir = if (b.x != a.x) Math.signum(b.x - a.x) else Math.signum(seatCenter(j).x - cx).let { if (it == 0f) 1f else it }
-                    spots[j] = Offset((a.x + dir * minDx).coerceIn(34f, w - 34f), b.y)
-                }
-            }
+    /**
+     * Bet spots for every seat. Each seat tries points from its pod towards the middle (and a little
+     * to either side) and takes the first that touches no seat, badge, card, the board, the pot or
+     * another bet. Several seat orders are tried; the one with the least overlap wins.
+     */
+    val betSpots: List<Offset> by lazy { computeBetSpots() }
+
+    private fun computeBetSpots(): List<Offset> {
+        val hw = 32f
+        val hh = 12f
+        val obstacles = ArrayList<Box4>()
+        for (r in 1 until n) {
+            val s = seatCenter(r)
+            obstacles += Box4(s.x - podW / 2 - 6f, s.y - podH / 2 - 18f, s.x + podW / 2 + 6f, s.y + podH / 2 + 16f)
         }
-        return spots
+        obstacles += Box4(cx - boardW / 2 - 4f, boardTop - 4f, cx + boardW / 2 + 4f, boardBottom + 4f)
+        obstacles += Box4(cx - 55f, boardBottom - 14f, cx + 55f, boardBottom + 12f)
+        obstacles += Box4(cx - (podW + 16f) / 2, heroPodTop, cx + (podW + 16f) / 2, h)
+        obstacles += Box4(cx - heroCardsW / 2 - 4f, heroCardsTop - 12f, cx + heroCardsW / 2 + 4f, heroPod.y)
+        obstacles += Box4(heroBadgeRight.x - 54f, heroBadgeRight.y - 13f, heroBadgeRight.x + 54f, heroBadgeRight.y + 13f)
+        obstacles += Box4(heroBadgeLeft.x - 48f, heroBadgeLeft.y - 13f, heroBadgeLeft.x + 48f, heroBadgeLeft.y + 13f)
+
+        fun overlap(x: Float, y: Float, boxes: List<Box4>): Float {
+            var total = 0f
+            if (x - hw < 0f || x + hw > w || y - hh < 0f || y + hh > h) total += 1000f
+            for (o in boxes) {
+                val ox = min(x + hw, o.r) - maxOf(x - hw, o.l)
+                val oy = min(y + hh, o.b) - maxOf(y - hh, o.t)
+                if (ox > 0f && oy > 0f) total += ox * oy
+            }
+            return total
+        }
+
+        fun candidates(rel: Int): List<Offset> {
+            if (rel == 0) {
+                return (0 until 12).map { Offset(cx, heroCardsTop - 14f - it * 3f) } +
+                    listOf(-60f, 60f, -90f, 90f).map { Offset(cx + it, heroCardsTop - 14f) }
+            }
+            val s = seatCenter(rel)
+            val dx = cx - s.x
+            val dy = cy - s.y
+            val len = hypot(dx, dy).coerceAtLeast(1f)
+            val ux = dx / len
+            val uy = dy / len
+            val out = ArrayList<Offset>()
+            var t = 20f
+            val lateral = intArrayOf(0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 8, -8, 10, -10)
+            while (t < len) {
+                for (k in lateral) out += Offset(s.x + ux * t - uy * k * 8f, s.y + uy * t + ux * k * 8f)
+                t += 4f
+            }
+            return out
+        }
+
+        val cand = (0 until n).map { candidates(it) }
+        var best: Pair<Float, List<Offset>>? = null
+        val orders = ArrayList<List<Int>>()
+        for (k in 0 until maxOf(1, n - 1)) {
+            orders += listOf(0) + (0 until n - 1).map { 1 + (k + it) % (n - 1) }
+            orders += listOf(0) + (0 until n - 1).map { 1 + Math.floorMod(k - it, n - 1) }
+        }
+        for (order in orders) {
+            val placed = ArrayList<Box4>()
+            val spots = arrayOfNulls<Offset>(n)
+            var cost = 0f
+            for (r in order) {
+                if (r >= n) continue
+                val all = obstacles + placed
+                var chosen: Offset? = cand[r].firstOrNull { overlap(it.x, it.y, all) == 0f }
+                if (chosen == null) {
+                    chosen = cand[r].minByOrNull { overlap(it.x, it.y, all) } ?: seatCenter(r)
+                    cost += overlap(chosen.x, chosen.y, all) + 1f
+                }
+                spots[r] = chosen
+                placed += Box4(chosen.x - hw - 2f, chosen.y - hh - 2f, chosen.x + hw + 2f, chosen.y + hh + 2f)
+            }
+            if (best == null || cost < best.first) best = cost to spots.map { it ?: Offset(cx, cy) }
+            if (cost == 0f) break
+        }
+        return best!!.second
     }
 }
 
@@ -178,7 +220,7 @@ fun PokerTable(
 ) {
     BoxWithConstraints(modifier) {
         val n = t.seats.size
-        val g = TableGeometry(maxWidth.value, maxHeight.value, n)
+        val g = remember(maxWidth.value, maxHeight.value, n) { TableGeometry(maxWidth.value, maxHeight.value, n) }
         val heroIndex = t.seats.indexOfFirst { it.isHero }.coerceAtLeast(0)
         fun rel(i: Int) = (i - heroIndex + n) % n
 
@@ -236,7 +278,7 @@ fun PokerTable(
         }
 
         // bets (animated between seat, bet spot and pot); bigger bets are drawn on top
-        val spots = g.betSpots()
+        val spots = remember(g.w, g.h, n) { g.betSpots }
         for (i in t.seats.indices.sortedBy { t.seats[it].streetBet }) {
             val s = t.seats[i]
             key(s.seat) {
@@ -404,18 +446,18 @@ private fun SeatPod(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Strin
                     Text(s.name, color = Palette.Text, fontSize = 12.sp, lineHeight = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
                         if (s.busted) "—" else fmt(s.stack), maxLines = 1,
-                        color = if (s.allIn && !s.busted) Palette.Red else Palette.Gold, fontSize = 17.sp, lineHeight = 18.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold,
+                        color = if (s.allIn && !s.busted) Palette.Red else Palette.Gold, fontSize = if (g.crowded) 16.sp else 17.sp, lineHeight = 18.sp, fontFamily = Numeric, fontWeight = FontWeight.SemiBold,
                     )
                 }
                 val hole = s.hole
                 if (hole != null && !s.busted) {
                     AnimatedVisibility(!s.folded || s.faceUp, enter = fadeIn(), exit = fadeOut(tween(250)) + scaleOut(tween(250), targetScale = 0.4f)) {
                         DealIn(t.handKey, dealDelay, dealFrom, animateDeal) {
-                            Box(Modifier.size(41.dp, 34.dp)) {
+                            Box(Modifier.size((g.miniCardW * 1.68f).dp, (g.miniCardW * 1.4f).dp)) {
                                 val dim = t.highlight.isNotEmpty()
-                                FlipCard(hole[0], s.faceUp, 24.dp, dim && hole[0] !in t.highlight)
-                                Box(Modifier.offset(x = 16.dp, y = 0.dp)) {
-                                    FlipCard(hole[1], s.faceUp, 24.dp, dim && hole[1] !in t.highlight)
+                                FlipCard(hole[0], s.faceUp, g.miniCardW.dp, dim && hole[0] !in t.highlight)
+                                Box(Modifier.offset(x = (g.miniCardW * 0.68f).dp, y = 0.dp)) {
+                                    FlipCard(hole[1], s.faceUp, g.miniCardW.dp, dim && hole[1] !in t.highlight)
                                 }
                             }
                         }
@@ -487,14 +529,6 @@ private fun HeroSeat(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Stri
                 }
             }
         }
-        // badges to the right of the cards
-        val badgeAnchor = Offset(g.cx + g.heroCardsW / 2 + 52f, g.heroCardsTop + g.heroCardH / 2 + 8f)
-        Box(Modifier.fillMaxSize().centerAt(badgeAnchor)) {
-            Column(Modifier.width(96.dp), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null && s.won > 0)
-                WonOrEquity(s, fmt)
-            }
-        }
     }
     // pod
     Box(Modifier.fillMaxSize().centerAt(g.heroPod)) {
@@ -515,6 +549,15 @@ private fun HeroSeat(s: SeatUi, g: TableGeometry, t: TableUi, fmt: (Int) -> Stri
                 }
             }
             if (s.isButton) Box(Modifier.align(Alignment.CenterStart).offset(x = (-22).dp)) { DealerButton() }
+        }
+    }
+    // badges on the pod's top edge: action / made hand to the right of the cards, winnings to the left
+    if (hole != null && !s.busted) {
+        Box(Modifier.fillMaxSize().centerAt(g.heroBadgeRight)) {
+            ActionBadge(s.handName ?: s.action, s.actKind, gold = s.handName != null && s.won > 0)
+        }
+        Box(Modifier.fillMaxSize().centerAt(g.heroBadgeLeft)) {
+            WonOrEquity(s, fmt)
         }
     }
 }
