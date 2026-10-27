@@ -179,17 +179,17 @@ private fun SidePanel(
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         // header
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(st.handNo(ui.handNumber), color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(ui.blindsText, color = Palette.TextDim, fontSize = 11.sp, maxLines = 1)
-                if (ui.levelText != null) Text(ui.levelText, color = Palette.Accent, fontSize = 11.sp, maxLines = 1)
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(st.handNo(ui.handNumber), color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f))
+                RoundIcon(if (ui.soundOn) "🔊" else "🔇", st.sound, onSound)
+                Spacer(Modifier.width(4.dp))
+                RoundIcon("?", st.guide, onHelp)
+                Spacer(Modifier.width(4.dp))
+                RoundIcon("✕", st.exit, onExit)
             }
-            RoundIcon(if (ui.soundOn) "🔊" else "🔇", st.sound, onSound)
-            Spacer(Modifier.width(4.dp))
-            RoundIcon("?", st.guide, onHelp)
-            Spacer(Modifier.width(4.dp))
-            RoundIcon("✕", st.exit, onExit)
+            Text(ui.blindsText, color = Palette.TextDim, fontSize = 11.sp, maxLines = 1)
+            if (ui.levelText != null) Text(ui.levelText, color = Palette.Gold, fontSize = 11.sp, maxLines = 1)
         }
         // practice switch
         Row(

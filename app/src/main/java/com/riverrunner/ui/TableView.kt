@@ -45,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -136,6 +137,25 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
         }
         return Offset(x.coerceIn(hw, w - hw), y.coerceIn(hh, h - hh))
     }
+
+    /** Bet spots for every seat, pushed apart so no two chips ever overlap. */
+    fun betSpots(): List<Offset> {
+        val spots = (0 until n).map { betPos(it) }.toMutableList()
+        val minDx = 72f
+        val minDy = 26f
+        repeat(4) {
+            for (j in 1 until n) for (i in 0 until j) {
+                val a = spots[i]
+                val b = spots[j]
+                if (abs(a.x - b.x) < minDx && abs(a.y - b.y) < minDy) {
+                    // slide the later chip sideways, away from the earlier one (towards its own seat side)
+                    val dir = if (b.x != a.x) Math.signum(b.x - a.x) else Math.signum(seatCenter(j).x - cx).let { if (it == 0f) 1f else it }
+                    spots[j] = Offset((a.x + dir * minDx).coerceIn(34f, w - 34f), b.y)
+                }
+            }
+        }
+        return spots
+    }
 }
 
 private fun Modifier.centerAt(p: Offset): Modifier = this.layout { measurable, constraints ->
@@ -215,10 +235,14 @@ fun PokerTable(
             }
         }
 
-        // bets (animated between seat, bet spot and pot)
-        for ((i, s) in t.seats.withIndex()) {
-            val r = rel(i)
-            BetChip(s.streetBet, g.seatCenter(r), g.betPos(r), g.potCenter, fmt)
+        // bets (animated between seat, bet spot and pot); bigger bets are drawn on top
+        val spots = g.betSpots()
+        for (i in t.seats.indices.sortedBy { t.seats[it].streetBet }) {
+            val s = t.seats[i]
+            key(s.seat) {
+                val r = rel(i)
+                BetChip(s.streetBet, g.seatCenter(r), spots[r], g.potCenter, fmt)
+            }
         }
         // winnings flying from the pot to the winner
         for ((i, s) in t.seats.withIndex()) {

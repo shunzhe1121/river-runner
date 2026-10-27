@@ -174,6 +174,10 @@ data class Strings(
     val saveSlotCount: (Int, Int) -> String,
     val careerTitleFor: (String) -> String,
     val newGame: String,
+    val startGame: String,
+    val quickStart: String,
+    val stackLabelBB: String,
+    val setupSummary: (Boolean, Int, Int, Boolean, Int, Boolean) -> List<String>,
 )
 
 val ZH = Strings(
@@ -343,6 +347,7 @@ val ZH = Strings(
         com.riverrunner.engine.AchCategory.HANDS -> "牌型"
         com.riverrunner.engine.AchCategory.TOURNAMENT -> "锦标赛"
         com.riverrunner.engine.AchCategory.CASH -> "筹码局"
+        com.riverrunner.engine.AchCategory.FUN -> "趣味"
         com.riverrunner.engine.AchCategory.STUDY -> "学习"
     } },
     handsLabel = "手数",
@@ -356,6 +361,17 @@ val ZH = Strings(
     saveSlotCount = { a, b -> "$a / $b 个存档" },
     careerTitleFor = { "$it 的生涯" },
     newGame = "新牌局",
+    startGame = "开始游戏",
+    quickStart = "按上次设置开始",
+    stackLabelBB = "起始筹码 (BB)",
+    setupSummary = { tourney, size, bb, mixed, hpl, ante ->
+        listOfNotNull(
+            "$size 人" + if (tourney) "单桌锦标赛" else "筹码局",
+            "每人 $bb 个大盲",
+            if (tourney) "每 $hpl 手涨一次盲注" else if (ante) "有前注" else "无前注",
+            if (mixed) "混合桌：紧凶、松凶、跟注站等风格随机" else "GTO 桌：所有对手都按近似 GTO 打",
+        )
+    },
 )
 
 val EN = Strings(
@@ -525,6 +541,7 @@ val EN = Strings(
         com.riverrunner.engine.AchCategory.HANDS -> "Big hands"
         com.riverrunner.engine.AchCategory.TOURNAMENT -> "Tournaments"
         com.riverrunner.engine.AchCategory.CASH -> "Cash games"
+        com.riverrunner.engine.AchCategory.FUN -> "Just for fun"
         com.riverrunner.engine.AchCategory.STUDY -> "Study"
     } },
     handsLabel = "Hands",
@@ -538,6 +555,17 @@ val EN = Strings(
     saveSlotCount = { a, b -> "$a of $b saves" },
     careerTitleFor = { "$it's career" },
     newGame = "New game",
+    startGame = "Start a game",
+    quickStart = "Play last setup",
+    stackLabelBB = "Stack (BB)",
+    setupSummary = { tourney, size, bb, mixed, hpl, ante ->
+        listOfNotNull(
+            "$size-player " + if (tourney) "single-table tournament" else "cash game",
+            "$bb big blinds each",
+            if (tourney) "Blinds go up every $hpl hands" else if (ante) "With antes" else "No antes",
+            if (mixed) "Mixed table: TAG, LAG, station and more" else "GTO table: every opponent plays approximate GTO",
+        )
+    },
 )
 
 val LocalStrings = staticCompositionLocalOf { ZH }

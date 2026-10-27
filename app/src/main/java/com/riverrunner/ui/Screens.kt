@@ -2,6 +2,14 @@ package com.riverrunner.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import com.riverrunner.engine.Cards
+import com.riverrunner.data.Prefs
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,20 +69,12 @@ import java.util.Locale
 fun HomeScreen(vm: AppViewModel) {
     val st = LocalStrings.current
     val p = vm.prefs
-    var mode by remember { mutableStateOf(p.lastMode) }
-    var size by remember { mutableIntStateOf(p.lastSize) }
-    var stackBB by remember { mutableIntStateOf(p.lastStackBB) }
-    var table by remember { mutableStateOf(p.lastTableType) }
-    var hpl by remember { mutableIntStateOf(p.lastHandsPerLevel) }
-    var ante by remember { mutableStateOf(p.lastAnte) }
-    val stackOptions = if (mode == GameMode.CASH) listOf(50, 100, 150, 200) else listOf(20, 30, 50, 75, 100)
-
     Row(Modifier.fillMaxSize().background(Palette.Bg).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.width(300.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text("River Runner", color = Palette.Text, fontSize = 30.sp, lineHeight = 30.sp, fontFamily = Numeric, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(10.dp))
-                Text(st.tagline, color = Palette.TextDim, fontSize = 12.sp, modifier = Modifier.padding(bottom = 3.dp))
+                Text(st.tagline, color = Palette.TextDim, fontSize = 12.sp, maxLines = 1, modifier = Modifier.padding(bottom = 3.dp))
             }
             PlayerCard(vm.profile, vm.profileList.size, vm.maxSlots, onSwitch = { vm.screen = Screen.Saves }, modifier = Modifier.fillMaxWidth())
             val tiles = listOf(
@@ -87,36 +87,122 @@ fun HomeScreen(vm: AppViewModel) {
             )
             tiles.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { (label, go) -> NavItem(label, Modifier.weight(1f), highlight = label == st.guide && vm.profile.counter(com.riverrunner.engine.Progress.HANDS) < 20, onClick = go) }
+                    row.forEach { (label, go) -> NavItem(label, Modifier.weight(1f), onClick = go) }
                 }
             }
         }
-        Column(
-            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(Palette.Panel).padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        // the "table" side of the lobby: the one place with felt
+        Box(
+            Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(20.dp))
+                .background(Brush.radialGradient(listOf(Palette.FeltCenter, Palette.FeltEdge), radius = 900f))
+                .border(6.dp, Palette.Rail, RoundedCornerShape(20.dp))
+                .padding(18.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(Modifier.height(96.dp).width(130.dp)) {
+                    Box(Modifier.align(Alignment.Center).offset(x = (-24).dp).graphicsLayer { rotationZ = -10f }) {
+                        PlayingCard(Cards.parse("As"), 62.dp)
+                    }
+                    Box(Modifier.align(Alignment.Center).offset(x = 24.dp).graphicsLayer { rotationZ = 10f }) {
+                        PlayingCard(Cards.parse("Kh"), 62.dp)
+                    }
+                }
+                ActionButton(st.startGame, Palette.Gold, textColor = Palette.Ink, modifier = Modifier.width(260.dp).height(52.dp)) {
+                    vm.screen = Screen.Setup
+                }
+                val summary = st.setupSummary(
+                    p.lastMode == GameMode.TOURNAMENT, p.lastSize, p.lastStackBB,
+                    p.lastTableType == TableType.MIXED, p.lastHandsPerLevel, p.lastAnte,
+                )
+                Column(
+                    Modifier.width(260.dp).pressable { vm.startGame(lastConfig(p)) }.clip(RoundedCornerShape(12.dp))
+                        .background(Color(0x66000000)).border(1.dp, Palette.Gold.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                ) {
+                    Text(st.quickStart + "  ▶", color = Palette.Gold, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        summary.take(2).joinToString(if (st.isZh) "，" else ", "), color = Palette.Text.copy(alpha = 0.85f),
+                        fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun lastConfig(p: Prefs) = SessionConfig(
+    mode = p.lastMode, tableSize = p.lastSize, startingBB = p.lastStackBB, tableType = p.lastTableType,
+    handsPerLevel = p.lastHandsPerLevel, cashAnteFraction = if (p.lastAnte) 0.125 else 0.0,
+)
+
+@Composable
+private fun NavItem(text: String, modifier: Modifier, onClick: () -> Unit) {
+    Box(
+        modifier.pressable(onClick = onClick).height(48.dp).clip(RoundedCornerShape(10.dp))
+            .background(Palette.Panel).padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) { Text(text, color = Palette.Text, fontSize = 14.sp, maxLines = 1) }
+}
+
+// ============================================================================ New game setup
+
+@Composable
+fun SetupScreen(vm: AppViewModel) {
+    BackHandler { vm.screen = Screen.Home }
+    val p = vm.prefs
+    SetupContent(
+        initial = lastConfig(p),
+        onBack = { vm.screen = Screen.Home },
+        onStart = { c ->
+            p.lastMode = c.mode; p.lastSize = c.tableSize; p.lastStackBB = c.startingBB
+            p.lastTableType = c.tableType; p.lastHandsPerLevel = c.handsPerLevel; p.lastAnte = c.cashAnteFraction > 0
+            vm.startGame(c)
+        },
+    )
+}
+
+@Composable
+fun SetupContent(initial: SessionConfig, onBack: () -> Unit, onStart: (SessionConfig) -> Unit) {
+    val st = LocalStrings.current
+    var mode by remember { mutableStateOf(initial.mode) }
+    var size by remember { mutableIntStateOf(initial.tableSize) }
+    var stackBB by remember { mutableIntStateOf(initial.startingBB) }
+    var table by remember { mutableStateOf(initial.tableType) }
+    var hpl by remember { mutableIntStateOf(initial.handsPerLevel) }
+    var ante by remember { mutableStateOf(initial.cashAnteFraction > 0) }
+    val cashStacks = listOf(50, 100, 150, 200)
+    val tourneyStacks = listOf(20, 30, 50, 75, 100)
+    val stackOptions = if (mode == GameMode.CASH) cashStacks else tourneyStacks
+    Row(Modifier.fillMaxSize().background(Palette.Bg).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f).fillMaxHeight()) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SmallButton("←", onBack)
+                Text(st.newGame, color = Palette.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(8.dp))
+            Column(
+                Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Palette.Panel)
+                    .padding(horizontal = 14.dp, vertical = 10.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 OptionRow(st.mode) {
-                    Pill(st.cash, mode == GameMode.CASH, { mode = GameMode.CASH; if (stackBB !in listOf(50, 100, 150, 200)) stackBB = 100 })
-                    Pill(st.tournament, mode == GameMode.TOURNAMENT, { mode = GameMode.TOURNAMENT; if (stackBB !in listOf(20, 30, 50, 75, 100)) stackBB = 50 })
+                    Pill(st.cash, mode == GameMode.CASH, { mode = GameMode.CASH; if (stackBB !in cashStacks) stackBB = 100 })
+                    Pill(st.tournament, mode == GameMode.TOURNAMENT, { mode = GameMode.TOURNAMENT; if (stackBB !in tourneyStacks) stackBB = 50 })
                 }
                 OptionRow(st.players) {
-                    for (n in listOf(2, 5, 6, 7, 8)) Pill("$n", size == n, { size = n })
+                    for (n in listOf(2, 5, 6, 7, 8)) Pill("$n", size == n, { size = n }, Modifier.width(52.dp))
                 }
-                OptionRow(st.startingStack) {
-                    for (b in stackOptions) Pill("$b BB", stackBB == b, { stackBB = b })
+                OptionRow(st.stackLabelBB) {
+                    for (b in stackOptions) Pill("$b", stackBB == b, { stackBB = b }, Modifier.width(60.dp))
                 }
                 OptionRow(st.tableType) {
                     Pill(st.gtoTable, table == TableType.GTO, { table = TableType.GTO })
                     Pill(st.mixedTable, table == TableType.MIXED, { table = TableType.MIXED })
                 }
-                Text(
-                    if (table == TableType.GTO) st.gtoHint else st.mixedHint, color = Palette.TextDim, fontSize = 12.sp,
-                    modifier = Modifier.padding(start = 96.dp),
-                )
                 if (mode == GameMode.TOURNAMENT) {
                     OptionRow(st.handsPerLevel) {
-                        for (h in listOf(5, 8, 10, 15, 20)) Pill("$h", hpl == h, { hpl = h })
+                        for (h in listOf(5, 8, 10, 15, 20)) Pill("$h", hpl == h, { hpl = h }, Modifier.width(52.dp))
                     }
                 } else {
                     OptionRow(st.ante) {
@@ -125,10 +211,20 @@ fun HomeScreen(vm: AppViewModel) {
                     }
                 }
             }
-            ActionButton(st.start, Palette.Accent, textColor = Palette.Ink, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                p.lastMode = mode; p.lastSize = size; p.lastStackBB = stackBB
-                p.lastTableType = table; p.lastHandsPerLevel = hpl; p.lastAnte = ante
-                vm.startGame(
+        }
+        // what you are about to play, in words, next to the start button
+        Column(
+            Modifier.width(230.dp).fillMaxHeight().clip(RoundedCornerShape(16.dp))
+                .background(Brush.radialGradient(listOf(Palette.FeltCenter, Palette.FeltEdge), radius = 600f))
+                .border(5.dp, Palette.Rail, RoundedCornerShape(16.dp)).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val lines = st.setupSummary(mode == GameMode.TOURNAMENT, size, stackBB, table == TableType.MIXED, hpl, ante)
+            Text(lines[0], color = Palette.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold, lineHeight = 24.sp)
+            for (l in lines.drop(1)) Text(l, color = Palette.Text.copy(alpha = 0.85f), fontSize = 13.sp, lineHeight = 19.sp)
+            Spacer(Modifier.weight(1f))
+            ActionButton(st.start, Palette.Gold, textColor = Palette.Ink, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                onStart(
                     SessionConfig(
                         mode = mode, tableSize = size, startingBB = stackBB, tableType = table,
                         handsPerLevel = hpl, cashAnteFraction = if (ante) 0.125 else 0.0,
@@ -139,22 +235,18 @@ fun HomeScreen(vm: AppViewModel) {
     }
 }
 
-@Composable
-private fun NavItem(text: String, modifier: Modifier, highlight: Boolean = false, onClick: () -> Unit) {
-    Box(
-        modifier.pressable(onClick = onClick).height(48.dp).clip(RoundedCornerShape(10.dp))
-            .background(if (highlight) Palette.AccentDim else Palette.Panel)
-            .then(if (highlight) Modifier.border(1.dp, Palette.Accent, RoundedCornerShape(10.dp)) else Modifier)
-            .padding(horizontal = 6.dp),
-        contentAlignment = Alignment.Center,
-    ) { Text(text, color = Palette.Text, fontSize = 14.sp, maxLines = 1) }
-}
-
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OptionRow(label: String, content: @Composable () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = Palette.TextDim, fontSize = 13.sp, modifier = Modifier.width(96.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { content() }
+    Row(verticalAlignment = Alignment.Top) {
+        Text(
+            label, color = Palette.TextDim, fontSize = 13.sp, maxLines = 2,
+            modifier = Modifier.width(92.dp).padding(top = 10.dp),
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) { content() }
     }
 }
 

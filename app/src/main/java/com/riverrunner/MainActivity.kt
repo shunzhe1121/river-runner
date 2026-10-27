@@ -17,6 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.riverrunner.ui.AppViewModel
 import com.riverrunner.ui.GuideScreen
 import com.riverrunner.ui.SavesScreen
+import com.riverrunner.ui.SetupScreen
 import com.riverrunner.ui.AchievementsScreen
 import com.riverrunner.ui.UnlockToast
 import androidx.compose.ui.Alignment
@@ -55,6 +56,7 @@ class MainActivity : ComponentActivity() {
                             Screen.Guide -> GuideScreen(vm)
                             Screen.Saves -> SavesScreen(vm)
                             Screen.Achievements -> AchievementsScreen(vm)
+                            Screen.Setup -> SetupScreen(vm)
                         }
                         UnlockToast(vm.unlockToast, Modifier.align(Alignment.TopCenter))
                     }

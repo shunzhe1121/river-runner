@@ -276,6 +276,28 @@ class ScreenshotTest {
         }
     }
 
+    @Test fun t20_reported_chip_overlap() {
+        // 6 players, you UTG; button (top centre) re-raises next to the small blind's chip
+        val s = Scenario(ZH, 6, 3, listOf("Jh7h", "Kc4d", "9s8s", "AdQd", "Tc6c", "5h5d"), "Ks7d2c5hAs")
+        s.play(Move.raiseTo(250), Move.FOLD, Move.FOLD, Move.raiseTo(750), Move.FOLD, Move.FOLD)
+        table("20_reported_chip_overlap", s.ui(practice = true))
+    }
+
+    @Test fun t21_setup() = shot("21_setup") {
+        com.riverrunner.ui.SetupContent(com.riverrunner.engine.SessionConfig(GameMode.TOURNAMENT, 8, 50, com.riverrunner.engine.TableType.MIXED), {}, {})
+    }
+
+    @Test @Config(qualifiers = "w660dp-h320dp-land-xxhdpi")
+    fun t22_setup_narrow() = shot("22_setup_narrow") {
+        com.riverrunner.ui.SetupContent(com.riverrunner.engine.SessionConfig(GameMode.CASH, 5, 200, com.riverrunner.engine.TableType.GTO), {}, {})
+    }
+
+    @Test @Config(qualifiers = "w660dp-h320dp-land-xxhdpi")
+    fun t23_home_narrow() {
+        val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
+        shot("23_home_narrow") { HomeScreen(vm) }
+    }
+
     @Test fun t15_home() {
         val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
         shot("15_home") { HomeScreen(vm) }

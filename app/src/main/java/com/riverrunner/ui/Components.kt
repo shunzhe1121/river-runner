@@ -42,33 +42,33 @@ import androidx.compose.ui.unit.sp
 import com.riverrunner.engine.Cards
 
 /**
- * Colour tokens. Rule: Gold = chips and money only; Accent (river cyan) = you, selection and
- * anything interactive; Green/Red = results and the call/fold actions. See DESIGN.md.
+ * Colour tokens: classic green felt and brass. Gold marks money, the primary action and the
+ * current selection; Green/Red are results and the call/fold actions. See DESIGN.md.
  */
 object Palette {
-    val Bg = Color(0xFF0C141C)        // ink
-    val Panel = Color(0xFF142231)     // slate
-    val PanelHi = Color(0xFF1C2E40)   // raised slate
-    val PanelHi2 = Color(0xFF27405A)  // tracks, inactive controls
-    val Line = Color(0xFF3D6080)      // outlines that must read as a control
-    val FeltCenter = Color(0xFF137A72) // river teal
-    val FeltEdge = Color(0xFF09393A)
-    val Rail = Color(0xFF1E140D)      // walnut
-    val RailHi = Color(0xFF4A3322)
-    val Gold = Color(0xFFE3B04B)      // brass: money only
-    val GoldDim = Color(0xFF8A6A2C)
-    val Accent = Color(0xFF46D3E6)    // river cyan: you / interactive
-    val AccentDim = Color(0xFF1E5C6B)
-    val Text = Color(0xFFEAF0F4)      // chalk
-    val TextDim = Color(0xFF9FB2C3)   // mist
+    val Bg = Color(0xFF0C1310)        // green-black
+    val Panel = Color(0xFF141E19)
+    val PanelHi = Color(0xFF1E2A24)
+    val PanelHi2 = Color(0xFF2B3A32)  // tracks, inactive controls
+    val Line = Color(0xFF465C4F)
+    val FeltCenter = Color(0xFF1E7048) // casino green
+    val FeltEdge = Color(0xFF0C3A25)
+    val Rail = Color(0xFF241810)      // walnut
+    val RailHi = Color(0xFF4E3624)
+    val Gold = Color(0xFFE6B54F)      // brass
+    val GoldDim = Color(0xFF6E5525)
+    val Accent = Gold                 // selection, your turn, primary action
+    val AccentDim = GoldDim
+    val Text = Color(0xFFEEF1EA)
+    val TextDim = Color(0xFF9DAAA2)
     val Red = Color(0xFFF06A63)
-    val Green = Color(0xFF3FCB86)
+    val Green = Color(0xFF4FC88A)
     val Blue = Color(0xFF5B9BE6)
-    val FoldBtn = Color(0xFFB23B35)
-    val CallBtn = Color(0xFF1C7A51)
-    val RaiseBtn = Color(0xFFE08A2E)
+    val FoldBtn = Color(0xFFA83A33)
+    val CallBtn = Color(0xFF1F7A50)
+    val RaiseBtn = Color(0xFFE6B54F)
     val AllInBtn = Color(0xFFA82C22)
-    val Ink = Color(0xFF0C141C)
+    val Ink = Color(0xFF0C1310)
 }
 
 /** Condensed numerals for chip amounts and scores (Barlow Condensed, SIL OFL). */
@@ -180,7 +180,7 @@ fun Pill(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifie
             .padding(horizontal = 14.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = if (selected) Palette.Ink else Palette.Text, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+        Text(text, color = if (selected) Palette.Ink else Palette.Text, maxLines = 1, softWrap = false, fontSize = 14.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
     }
 }
 
