@@ -1,23 +1,23 @@
 # River Runner design system
 
-A night card room by a river: deep ink surfaces, a river-teal felt, brass chips.
+A classic card room: green felt, walnut rail, brass chips on a green-black room.
 The table is the one bold element; everything around it stays quiet.
 
-## Colour has a job
+## Colour
 
-| Token | Hex | Used for — and only for |
+| Token | Hex | Used for |
 |---|---|---|
-| Ink | `#0C141C` | App background, dark text on light fills |
-| Slate / Slate raised | `#142231` / `#1C2E40` | Panels, cards, inactive controls |
-| Chalk | `#EAF0F4` | Primary text and headings |
-| Mist | `#9FB2C3` | Secondary text (7.4:1 on Slate) |
-| River teal felt | `#137A72` → `#09393A` | The table only |
-| **Brass** | `#E3B04B` | **Money**: stacks, pot, bets, winnings, tournament titles |
-| **River cyan** | `#46D3E6` | **You and interaction**: your turn, selection, sliders, primary button, focus |
-| Green / Red | `#3FCB86` / `#F06A63` | Results (won / lost) and the call / fold buttons |
-| Raise orange | `#E08A2E` | Raise button (always with Ink text, 6.9:1) |
+| Room | `#0C1310` | App background, dark text on gold |
+| Panel / raised | `#141E19` / `#1E2A24` | Panels, cards, inactive controls |
+| Text / muted | `#EEF1EA` / `#9DAAA2` | Words (muted text is 7:1 on panels) |
+| Felt | `#1E7048` → `#0C3A25` | The table, the lobby's start area, the setup summary |
+| Rail | `#241810` | Table and felt-panel borders |
+| **Brass** | `#E6B54F` | Money (stacks, pot, bets, winnings), the primary action, the current selection, your turn |
+| Green / Red | `#4FC88A` / `#F06A63` | Results; call `#1F7A50` and fold `#A83A33` buttons |
 
-If something is gold, it is money. If it is cyan, it is you or it reacts to a tap.
+Gold fills are reserved for one primary action per screen (开始游戏, 开始, raise) and selected options; everything else uses gold only as text or a thin outline.
+
+Achievement chips keep their own category colours (cyan start, violet skill, rose big hands, brass tournaments, green cash, orange just-for-fun, blue study).
 
 ## Type
 
