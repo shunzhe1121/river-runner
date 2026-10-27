@@ -49,6 +49,7 @@ sealed class Screen {
     data object Guide : Screen()
     data object Saves : Screen()
     data object Achievements : Screen()
+    data object Setup : Screen()
 }
 
 class AppViewModel(app: Application) : AndroidViewModel(app) {

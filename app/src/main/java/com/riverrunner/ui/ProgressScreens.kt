@@ -64,11 +64,12 @@ import java.util.Date
 import java.util.Locale
 
 fun categoryColor(c: AchCategory): Color = when (c) {
-    AchCategory.START -> Palette.Accent
+    AchCategory.START -> Color(0xFF46D3E6)
     AchCategory.SKILL -> Color(0xFF9B83FF)
     AchCategory.HANDS -> Color(0xFFF0708F)
     AchCategory.TOURNAMENT -> Palette.Gold
     AchCategory.CASH -> Palette.Green
+    AchCategory.FUN -> Color(0xFFFF9447)
     AchCategory.STUDY -> Palette.Blue
 }
 
@@ -105,7 +106,7 @@ fun AchievementChip(def: AchievementDef, unlocked: Boolean, progress: Double, si
             )
             if (!unlocked && progress > 0) {
                 drawArc(
-                    Palette.Accent, -90f, (360 * progress).toFloat(), false,
+                    Palette.Gold, -90f, (360 * progress).toFloat(), false,
                     topLeft = Offset(c.x - r * 0.86f, c.y - r * 0.86f), size = Size(r * 1.72f, r * 1.72f),
                     style = Stroke(r * 0.1f, cap = StrokeCap.Round),
                 )

@@ -335,3 +335,49 @@ class AchievementTest {
         assertEquals(ids2.size, ids2.toSet().size)
     }
 }
+
+class FunAchievementTest {
+    private fun hand(n: Int, button: Int, holes: List<String>, board: String, moves: List<Move>): HandRecord {
+        val e = HandEngine(
+            HandSetup(50, 100, 0, button, (0 until n).map { SeatSetup(it, "P$it", 10000) }),
+            PresetCardSource(holes.mapIndexed { i, h -> i to Cards.parseMany(h) }.toMap(), Cards.parseMany(board)),
+        )
+        for (m in moves) { while (e.phase == Phase.STREET_DONE) e.dealNextStreet(); e.apply(m) }
+        while (e.phase != Phase.HAND_DONE) {
+            if (e.phase == Phase.STREET_DONE) e.dealNextStreet()
+            else e.apply(if (e.legalActions().canCheck) Move.CHECK else Move.CALL)
+        }
+        return HandRecord.from(e, GameMode.CASH, 1, 0, n, emptyMap())
+    }
+
+    @Test fun acesCrackedAllInAsFavourite() {
+        // AA all-in preflop vs 7-2, the board runs out a full house for 7-2
+        val d = Facts.forHand(hand(2, 0, listOf("AsAh", "7c2d"), "7h7s2c9dKc", listOf(Move.raiseTo(10000), Move.CALL)))
+        assertEquals(1L, d[Progress.LOST_WITH_AA])
+        assertEquals(1L, d[Progress.ALLIN_LOST_FAVOURITE])
+    }
+
+    @Test fun bluffCaughtAndKicker() {
+        // hero air bets river, villain calls with a pair
+        val d = Facts.forHand(hand(2, 0, listOf("7c6d", "QhJh"), "Qs9s2d3hKc",
+            listOf(Move.CALL, Move.CHECK, Move.CHECK, Move.CHECK, Move.CHECK, Move.CHECK, Move.CHECK, Move.raiseTo(300), Move.CALL)))
+        assertEquals(1L, d[Progress.BLUFF_CAUGHT])
+        // same pair of kings, hero loses on the kicker
+        val k = Facts.forHand(hand(2, 0, listOf("Kh8d", "KcQd"), "Ks9s2d3h5c", listOf(Move.CALL, Move.CHECK)))
+        assertEquals(1L, k[Progress.KICKER_LOSSES])
+    }
+
+    @Test fun foldStreak() {
+        val counters = HashMap<String, Long>()
+        val fold = Facts.forHand(hand(6, 3, listOf("7c2d", "AsAh", "KdKc", "9h8h", "JdTd", "4c4d"), "Ah5s6cKd2h",
+            listOf(Move.FOLD, Move.FOLD, Move.FOLD, Move.FOLD, Move.FOLD)))
+        assertEquals(1L, fold[Progress.FOLD_STREAK])
+        repeat(25) { Progress.apply(counters, fold) }
+        assertEquals(25L, counters[Progress.MAX_FOLD_STREAK])
+        Progress.apply(counters, mapOf(Progress.FOLD_STREAK to 0L))
+        assertEquals(0L, counters[Progress.FOLD_STREAK])
+        assertEquals(25L, counters[Progress.MAX_FOLD_STREAK])
+        assertTrue(Achievements.newlyUnlocked(counters, emptySet()).any { it.id == "zen_fold" })
+        assertEquals(35, Achievements.all.size)
+    }
+}

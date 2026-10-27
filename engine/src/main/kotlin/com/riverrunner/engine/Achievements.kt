@@ -30,6 +30,15 @@ object Progress {
     const val HU_TITLES = "hu_titles"
     const val FULL_TABLE_TITLES = "full_table_titles"
 
+    // funny ones
+    const val LOST_WITH_AA = "lost_with_aa"
+    const val ALLIN_LOST_FAVOURITE = "allin_lost_favourite"
+    const val BLUFF_CAUGHT = "bluff_caught"
+    const val KICKER_LOSSES = "kicker_losses"
+    /** current run of hands folded preflop; 1 extends the run, 0 ends it */
+    const val FOLD_STREAK = "fold_streak"
+    const val MAX_FOLD_STREAK = "max_fold_streak"
+
     const val GUIDE_OPENED = "guide_opened"
     const val REPLAYS = "replays"
     const val STARS = "stars"
@@ -38,12 +47,19 @@ object Progress {
     fun apply(counters: MutableMap<String, Long>, delta: Map<String, Long>) {
         for ((k, v) in delta) {
             val old = counters[k] ?: 0L
-            counters[k] = if (k.startsWith("max_")) maxOf(old, v) else old + v
+            counters[k] = when {
+                k == FOLD_STREAK -> if (v > 0) old + v else 0L
+                k.startsWith("max_") -> maxOf(old, v)
+                else -> old + v
+            }
+        }
+        if (FOLD_STREAK in delta) {
+            counters[MAX_FOLD_STREAK] = maxOf(counters[MAX_FOLD_STREAK] ?: 0L, counters[FOLD_STREAK] ?: 0L)
         }
     }
 }
 
-enum class AchCategory { START, SKILL, HANDS, TOURNAMENT, CASH, STUDY }
+enum class AchCategory { START, SKILL, HANDS, TOURNAMENT, CASH, FUN, STUDY }
 
 data class AchievementDef(
     val id: String,
@@ -95,6 +111,12 @@ object Achievements {
         a("double_up", AchCategory.CASH, "×2", Progress.CASH_DOUBLE_UPS, 1, "翻倍", "一场筹码局结束时筹码翻倍", "Double up", "Finish a cash session with double your starting stack"),
         a("cash_10", AchCategory.CASH, "10", Progress.CASH_SESSIONS, 10, "常驻现金桌", "打完 10 场筹码局", "Cash regular", "Finish 10 cash sessions"),
 
+        a("rocket_crash", AchCategory.FUN, "坠", Progress.LOST_WITH_AA, 1, "火箭坠毁", "拿着 AA 打到摊牌，结果输了", "Rockets crashed", "Lose a showdown holding pocket aces"),
+        a("duck_flew", AchCategory.FUN, "鸭", Progress.ALLIN_LOST_FAVOURITE, 1, "煮熟的鸭子飞了", "全下时胜率超过 80%，最后还是输了", "So close", "Lose an all-in where you had over 80% equity"),
+        a("bluff_caught", AchCategory.FUN, "抓", Progress.BLUFF_CAUGHT, 1, "诈唬被抓", "河牌只有高牌还下注，被跟注后输掉", "Caught bluffing", "Bet the river with only high card, get called and lose"),
+        a("kicker_pain", AchCategory.FUN, "踢", Progress.KICKER_LOSSES, 1, "输在踢脚", "和对手牌型一样，却输在踢脚上", "Out-kicked", "Lose a showdown with the same hand as your opponent, decided by the kicker"),
+        a("zen_fold", AchCategory.FUN, "禅", Progress.MAX_FOLD_STREAK, 25, "老僧入定", "连续 25 手翻牌前直接弃牌", "Zen master", "Fold preflop 25 hands in a row"),
+
         a("guide", AchCategory.STUDY, "书", Progress.GUIDE_OPENED, 1, "好学生", "打开新手指南", "Good student", "Open the beginner guide"),
         a("replay_10", AchCategory.STUDY, "复", Progress.REPLAYS, 10, "复盘狂人", "复盘 10 手牌", "Reviewer", "Replay 10 hands"),
         a("star_5", AchCategory.STUDY, "★", Progress.STARS, 5, "收藏家", "收藏 5 手牌", "Collector", "Star 5 hands"),
@@ -122,51 +144,76 @@ object Facts {
         val hero = r.hero ?: return d
         val h0 = Cards.rank(hero.hole[0])
         val h1 = Cards.rank(hero.hole[1])
-        if (h0 == 12 && h1 == 12) d[Progress.DEALT_AA] = 1
+        val aces = h0 == 12 && h1 == 12
+        if (aces) d[Progress.DEALT_AA] = 1
+
+        // preflop fold streak: folding as your first decision extends it, playing ends it
+        val pre = r.actions.filter { it.street == Street.PREFLOP && !it.type.isPost }
+        val heroFirst = pre.indexOfFirst { it.seat == hero.seat }
+        if (heroFirst >= 0) d[Progress.FOLD_STREAK] = if (pre[heroFirst].type == ActionType.FOLD) 1L else 0L
+
+        val folded = r.actions.filter { it.type == ActionType.FOLD }.map { it.seat }.toSet()
+        val live = r.players.filter { it.seat !in folded }
+        val showdown = live.size >= 2 && r.board.size == 5 && hero.seat !in folded
+        val boardList = r.board.toList()
+        val heroScore = if (r.board.size == 5) HandEvaluator.evaluate((boardList + hero.hole.toList()).toIntArray()) else 0
+        val allInPot = r.actions.any { it.allIn && it.seat in live.map { p -> p.seat } }
         val net = r.heroNet
-        if (net <= 0) return d
+
+        fun heroEquityAtAllIn(): Double? {
+            val last = r.actions.lastOrNull { !it.type.isPost }
+            val boardAtAllIn = r.board.take(last?.street?.boardCount ?: 0)
+            if (boardAtAllIn.size >= 5) return null
+            val eq = Equity.showdown(live.map { it.hole }, boardAtAllIn, Random(r.id), 4000)
+            return eq[live.indexOfFirst { it.seat == hero.seat }]
+        }
+
+        val lastHero = r.actions.lastOrNull { it.seat == hero.seat }
+        val heroBetRiver = r.board.size == 5 && lastHero != null && lastHero.street == Street.RIVER && lastHero.type.isAggressive
+
+        if (net <= 0) {
+            if (showdown && net < 0) {
+                if (aces) d[Progress.LOST_WITH_AA] = 1
+                if (heroBetRiver && HandEvaluator.category(heroScore) == HandEvaluator.HIGH_CARD) d[Progress.BLUFF_CAUGHT] = 1
+                val best = live.filter { it.seat != hero.seat }
+                    .maxOfOrNull { HandEvaluator.evaluate((boardList + it.hole.toList()).toIntArray()) } ?: 0
+                // same category and same main rank(s): the kicker decided it
+                val cat = HandEvaluator.category(heroScore)
+                val shift = if (cat == HandEvaluator.TWO_PAIR) 12 else 16
+                if (best > heroScore && cat <= HandEvaluator.TWO_PAIR && (best ushr shift) == (heroScore ushr shift))
+                    d[Progress.KICKER_LOSSES] = 1
+                if (allInPot) heroEquityAtAllIn()?.let { if (it > 0.8) d[Progress.ALLIN_LOST_FAVOURITE] = 1 }
+            }
+            return d
+        }
 
         d[Progress.POTS_WON] = 1
         d[Progress.MAX_WIN_BB] = net.toLong() / r.bigBlind
         val suited = Cards.suit(hero.hole[0]) == Cards.suit(hero.hole[1])
         if (!suited && setOf(h0, h1) == setOf(5, 0)) d[Progress.WON_72] = 1
 
-        val folded = r.actions.filter { it.type == ActionType.FOLD }.map { it.seat }.toSet()
-        val live = r.players.filter { it.seat !in folded }
-        if (live.size >= 2 && r.board.size == 5) {
+        if (showdown) {
             d[Progress.SHOWDOWN_WINS] = 1
-            val score = HandEvaluator.evaluate((r.board.toList() + hero.hole.toList()).toIntArray())
-            when (HandEvaluator.category(score)) {
+            when (HandEvaluator.category(heroScore)) {
                 HandEvaluator.FULL_HOUSE -> d[Progress.WON_FULL_HOUSE] = 1
                 HandEvaluator.QUADS -> d[Progress.WON_QUADS] = 1
                 HandEvaluator.STRAIGHT_FLUSH -> {
-                    if (((score ushr 16) and 0xF) == 12) d[Progress.WON_ROYAL] = 1
+                    if (((heroScore ushr 16) and 0xF) == 12) d[Progress.WON_ROYAL] = 1
                     else d[Progress.WON_STRAIGHT_FLUSH] = 1
                 }
             }
-            if (r.actions.any { it.allIn && it.seat in live.map { p -> p.seat } }) {
+            if (allInPot) {
                 d[Progress.ALLIN_WINS] = 1
-                // equity when the money went in (board as it was at the last voluntary action)
-                val last = r.actions.lastOrNull { !it.type.isPost }
-                val boardAtAllIn = r.board.take(last?.street?.boardCount ?: 0)
-                if (boardAtAllIn.size < 5) {
-                    val holes = live.map { it.hole }
-                    val eq = Equity.showdown(holes, boardAtAllIn, Random(r.id), 4000)
-                    val heroEq = eq[live.indexOfFirst { it.seat == hero.seat }]
-                    if (heroEq < 0.35) d[Progress.SUCKOUTS] = 1
-                }
+                heroEquityAtAllIn()?.let { if (it < 0.35) d[Progress.SUCKOUTS] = 1 }
             }
         } else {
             // won without showdown
-            val pre = r.actions.filter { it.street == Street.PREFLOP && !it.type.isPost }
-            val heroFirst = pre.indexOfFirst { it.seat == hero.seat }
             if (r.board.isEmpty() && heroFirst >= 0 && pre[heroFirst].type.isAggressive &&
                 pre.subList(0, heroFirst).all { it.type == ActionType.FOLD } &&
                 Stats.positionOf(r) in STEAL_SEATS
             ) d[Progress.STEALS] = 1
-            val lastHero = r.actions.lastOrNull { it.seat == hero.seat }
-            if (r.board.size == 5 && lastHero != null && lastHero.street == Street.RIVER && lastHero.type.isAggressive) {
-                val cat = HandEvaluator.category(HandEvaluator.evaluate((r.board.toList() + hero.hole.toList()).toIntArray()))
+            if (heroBetRiver) {
+                val cat = HandEvaluator.category(HandEvaluator.evaluate((boardList + hero.hole.toList()).toIntArray()))
                 if (cat == HandEvaluator.HIGH_CARD) d[Progress.RIVER_BLUFFS] = 1
             }
         }
