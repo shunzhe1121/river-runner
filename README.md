@@ -21,7 +21,7 @@ A personal, fully offline Texas Hold'em trainer for Android — drill your range
 | Table feel / 牌桌体验 | Dealing and card-flip animations, chips sliding to the pot and to the winner, pulsing turn indicator with a "thinking" bar, vibration on your turn, live action log; every hand waits for **Next hand** so you can read the showdown / 发牌翻牌动画、筹码动画、行动提示与震动、行动记录；每手结束等你点"下一手" |
 | Beginner guide / 新手指南 | Rules, hand rankings, positions, glossary of terms, beginner tips — also reachable from the table via **?** / 玩法、牌型、位置、术语、新手建议，牌桌上点 ? 也能打开 |
 | Saves / 存档 | Up to 6 save slots, each with its own career stats, hand history and achievements; create, switch, rename, delete / 最多 6 个存档，各自独立的生涯统计、牌局记录和成就，可新建、切换、重命名、删除 |
-| Achievements / 成就 | 30 achievements across getting started, skill (blind steals, river bluffs, suck-outs), big hands, tournaments, cash games and study / 30 个成就：起步、技术、牌型、锦标赛、筹码局、学习 |
+| Achievements / 成就 | 35 achievements across getting started, skill (blind steals, river bluffs, suck-outs), big hands, tournaments, cash games, study and just-for-fun ones (aces cracked, out-kicked, caught bluffing…) / 35 个成就：起步、技术、牌型、锦标赛、筹码局、学习，以及趣味成就（火箭坠毁、输在踢脚、诈唬被抓…） |
 | Language / 语言 | 中文 / English, switchable in-app |
 
 ## How the bots decide / NPC 如何决策
