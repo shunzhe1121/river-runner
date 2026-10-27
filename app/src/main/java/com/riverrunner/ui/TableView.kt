@@ -97,8 +97,8 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
     val heroPod = Offset(cx, h - podH / 2 - 2f)
     val heroPodTop = heroPod.y - podH / 2
     val heroCardsTop = heroPodTop + 10f - heroCardH
-    /** the pot pill sits on the lower edge of the board */
-    val potCenter = Offset(cx, boardBottom - 1f)
+    /** the pot pill sits just under the board (the result banner takes its place at the end) */
+    val potCenter = Offset(cx, boardBottom + 14f)
     val bannerCenter = Offset(cx, boardBottom + 16f)
     /** hero's action badge (right of the cards, on the pod's top edge) and winnings badge (left) */
     val heroBadgeRight = Offset(cx + heroCardsW / 2 + 50f, heroPodTop - 9f)
@@ -133,7 +133,7 @@ class TableGeometry(val w: Float, val h: Float, val n: Int) {
             obstacles += Box4(s.x - podW / 2 - 6f, s.y - podH / 2 - 18f, s.x + podW / 2 + 6f, s.y + podH / 2 + 16f)
         }
         obstacles += Box4(cx - boardW / 2 - 4f, boardTop - 4f, cx + boardW / 2 + 4f, boardBottom + 4f)
-        obstacles += Box4(cx - 55f, boardBottom - 14f, cx + 55f, boardBottom + 12f)
+        obstacles += Box4(cx - 58f, boardBottom, cx + 58f, boardBottom + 28f)
         obstacles += Box4(cx - (podW + 16f) / 2, heroPodTop, cx + (podW + 16f) / 2, h)
         obstacles += Box4(cx - heroCardsW / 2 - 4f, heroCardsTop - 12f, cx + heroCardsW / 2 + 4f, heroPod.y)
         obstacles += Box4(heroBadgeRight.x - 54f, heroBadgeRight.y - 13f, heroBadgeRight.x + 54f, heroBadgeRight.y + 13f)
@@ -226,14 +226,6 @@ fun PokerTable(
 
         Felt(g)
 
-        // pot
-        val potShown by animateIntAsState(t.pot, tween(450), label = "pot")
-        Box(Modifier.fillMaxSize().centerAt(g.potCenter)) {
-            AnimatedVisibility(t.pot > 0, enter = fadeIn() + scaleIn(), exit = fadeOut()) {
-                ChipLabel("$potLabel ${fmt(potShown)}")
-            }
-        }
-
         // board
         Row(
             Modifier.fillMaxSize().centerAt(Offset(g.cx, g.cy)).wrapContentSize(),
@@ -242,6 +234,14 @@ fun PokerTable(
             for (i in 0 until 5) {
                 val c = t.board.getOrNull(i)
                 BoardCard(c, g.boardCardW.dp, if (i < 3) i * 120 else 0, dim = t.highlight.isNotEmpty() && c !in t.highlight)
+            }
+        }
+
+        // pot
+        val potShown by animateIntAsState(t.pot, tween(450), label = "pot")
+        Box(Modifier.fillMaxSize().centerAt(g.potCenter)) {
+            AnimatedVisibility(t.pot > 0, enter = fadeIn() + scaleIn(), exit = fadeOut()) {
+                ChipLabel("$potLabel ${fmt(potShown)}")
             }
         }
 
