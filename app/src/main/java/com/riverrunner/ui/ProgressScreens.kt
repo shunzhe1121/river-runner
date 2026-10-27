@@ -256,15 +256,15 @@ private fun AchievementTile(d: AchievementDef, profile: Profile, df: SimpleDateF
     val done = at != null
     val value = profile.counter(d.counter).coerceAtMost(d.target)
     Row(
-        modifier.clip(RoundedCornerShape(12.dp)).background(if (done) Palette.PanelHi else Palette.Panel)
-            .padding(10.dp),
+        modifier.height(96.dp).clip(RoundedCornerShape(12.dp)).background(if (done) Palette.PanelHi else Palette.Panel)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AchievementChip(d, done, Achievements.progress(d, profile.counters), 52.dp)
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text(if (st.isZh) d.nameZh else d.nameEn, color = if (done) Palette.Text else Palette.TextDim, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text(if (st.isZh) d.descZh else d.descEn, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(if (st.isZh) d.descZh else d.descEn, color = Palette.TextDim, fontSize = 11.sp, lineHeight = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
                 if (done) st.unlockedOn(df.format(Date(at!!))) else "$value / ${d.target}",
                 color = if (done) categoryColor(d.category) else Palette.Accent, fontSize = 12.sp,
