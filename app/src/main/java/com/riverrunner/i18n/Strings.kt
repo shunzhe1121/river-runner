@@ -177,6 +177,10 @@ data class Strings(
     val startGame: String,
     val quickStart: String,
     val stackLabelBB: String,
+    val deckStyle: String,
+    val deckFour: String,
+    val deckFilled: String,
+    val deckClassic: String,
     val setupSummary: (Boolean, Int, Int, Boolean, Int, Boolean) -> List<String>,
 )
 
@@ -364,6 +368,10 @@ val ZH = Strings(
     startGame = "开始游戏",
     quickStart = "按上次设置开始",
     stackLabelBB = "起始筹码 (BB)",
+    deckStyle = "牌面配色",
+    deckFour = "四色",
+    deckFilled = "四色底",
+    deckClassic = "红黑",
     setupSummary = { tourney, size, bb, mixed, hpl, ante ->
         listOfNotNull(
             "$size 人" + if (tourney) "单桌锦标赛" else "筹码局",
@@ -558,6 +566,10 @@ val EN = Strings(
     startGame = "Start a game",
     quickStart = "Play last setup",
     stackLabelBB = "Stack (BB)",
+    deckStyle = "Card colours",
+    deckFour = "4-colour",
+    deckFilled = "Coloured cards",
+    deckClassic = "Red/black",
     setupSummary = { tourney, size, bb, mixed, hpl, ante ->
         listOfNotNull(
             "$size-player " + if (tourney) "single-table tournament" else "cash game",

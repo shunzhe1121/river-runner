@@ -86,13 +86,6 @@ fun actColor(k: ActKind?): Color = when (k) {
     ActKind.POST, null -> Color(0xFF3A4741)
 }
 
-private fun suitColor(suit: Int): Color = when (suit) {
-    0 -> Color(0xFF1E7D3A)  // clubs: green (4-colour deck)
-    1 -> Color(0xFF1F5FBF)  // diamonds: blue
-    2 -> Color(0xFFC62828)  // hearts: red
-    else -> Color(0xFF1A1A1A) // spades: black
-}
-
 private val SUIT_SYMBOL = charArrayOf('♣', '♦', '♥', '♠')
 
 fun rankText(card: Int): String = Cards.RANKS[Cards.rank(card)].let { if (it == 'T') "10" else it.toString() }
@@ -107,24 +100,32 @@ fun PlayingCard(card: Int?, width: Dp, dim: Boolean = false, modifier: Modifier 
         CardBack(width, modifier)
         return
     }
-    val color = suitColor(Cards.suit(card))
+    val suit = Cards.suit(card)
+    val style = LocalDeckStyle.current
+    val filled = style == DeckStyle.FOUR_COLOR_FILLED
+    val ink = when (style) {
+        DeckStyle.CLASSIC -> classicColor(suit)
+        DeckStyle.FOUR_COLOR -> fourColor(suit)
+        DeckStyle.FOUR_COLOR_FILLED -> Color.White
+    }
+    val face = if (filled) fourColor(suit).let { if (suit == 3) Color(0xFF2A2D31) else it } else Color(0xFFFBF9F3)
     Box(
         modifier.size(width, h).clip(shape)
-            .background(if (dim) Color(0xFF9EA39C) else Color(0xFFFBF9F3))
-            .border(1.dp, Color(0x40000000), shape)
+            .background(face)
+            .border(if (filled) 1.5.dp else 1.dp, if (filled) Color.White.copy(alpha = 0.85f) else Color(0x40000000), shape)
     ) {
-        Column(Modifier.padding(start = width * 0.09f, top = width * 0.02f)) {
+        Column(Modifier.padding(start = width * 0.09f, top = width * 0.03f)) {
             Text(
-                rankText(card), color = color, fontWeight = FontWeight.Bold,
+                rankText(card), color = ink, fontWeight = FontWeight.Bold,
                 fontSize = (width.value * 0.44f).sp, lineHeight = (width.value * 0.48f).sp,
             )
-            Text(suitText(card), color = color, fontSize = (width.value * 0.34f).sp, lineHeight = (width.value * 0.36f).sp)
+            SuitIcon(suit, width * 0.27f, ink)
         }
-        Text(
-            suitText(card), color = color.copy(alpha = 0.92f),
-            fontSize = (width.value * 0.62f).sp,
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = width * 0.07f),
+        SuitIcon(
+            suit, width * 0.5f, ink.copy(alpha = 0.95f),
+            Modifier.align(Alignment.BottomEnd).padding(end = width * 0.08f, bottom = width * 0.08f),
         )
+        if (dim) Box(Modifier.matchParentSize().background(Color(0x73000000)))
     }
 }
 

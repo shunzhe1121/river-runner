@@ -37,6 +37,11 @@ import com.riverrunner.ui.SeatInfo
 import com.riverrunner.ui.TableContent
 import com.riverrunner.ui.TableMapper
 import com.riverrunner.ui.TableScreenUi
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -313,6 +318,25 @@ class ScreenshotTest {
         s.deal()
         s.play(Move.raiseTo(200), Move.raiseTo(800), Move.CALL)
         table("25_eight_flop_your_phone", s.ui())
+    }
+
+    @Test fun t26_deck_styles() = shot("26_deck_styles") {
+        androidx.compose.foundation.layout.Column(
+            androidx.compose.ui.Modifier.fillMaxSize().background(com.riverrunner.ui.Palette.Bg).padding(12.dp),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
+        ) {
+            for (style in com.riverrunner.ui.DeckStyle.entries) {
+                androidx.compose.runtime.CompositionLocalProvider(com.riverrunner.ui.LocalDeckStyle provides style) {
+                    androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+                        for (c in listOf("3c", "4s", "Jc", "Js", "Qd", "Kh")) com.riverrunner.ui.PlayingCard(com.riverrunner.engine.Cards.parse(c), 50.dp)
+                        androidx.compose.foundation.layout.Spacer(androidx.compose.ui.Modifier.width(16.dp))
+                        for (c in listOf("9c", "9s", "2c", "2s")) com.riverrunner.ui.PlayingCard(com.riverrunner.engine.Cards.parse(c), 24.dp)
+                        androidx.compose.foundation.layout.Spacer(androidx.compose.ui.Modifier.width(16.dp))
+                        for (c in listOf("7c", "7s")) com.riverrunner.ui.PlayingCard(com.riverrunner.engine.Cards.parse(c), 18.dp)
+                    }
+                }
+            }
+        }
     }
 
     @Test fun t15_home() {

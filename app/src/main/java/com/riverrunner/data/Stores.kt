@@ -33,6 +33,10 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("sound", true)
         set(v) = sp.edit().putBoolean("sound", v).apply()
 
+    var deckStyle: String
+        get() = sp.getString("deck", "4") ?: "4"
+        set(v) = sp.edit().putString("deck", v).apply()
+
     var showInBB: Boolean
         get() = sp.getBoolean("bb", true)
         set(v) = sp.edit().putBoolean("bb", v).apply()

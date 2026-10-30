@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             val vm: AppViewModel = viewModel()
-            RiverTheme(vm.strings) {
+            RiverTheme(vm.strings, vm.deckStyle) {
                 run {
                     Box(Modifier.fillMaxSize().background(Palette.Bg).windowInsetsPadding(WindowInsets.displayCutout)) {
                         when (val s = vm.screen) {
