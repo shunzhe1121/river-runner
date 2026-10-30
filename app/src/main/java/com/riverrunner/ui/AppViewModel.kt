@@ -148,6 +148,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setChinese(zh: Boolean) { prefs.chinese = zh; strings = if (zh) ZH else EN }
     fun setShowBB(v: Boolean) { prefs.showInBB = v; showInBB = v }
+    var deckStyle by mutableStateOf(DeckStyle.fromCode(prefs.deckStyle)); private set
+    fun setDeck(d: DeckStyle) { prefs.deckStyle = d.code; deckStyle = d }
 
     private val sound = SoundPlayer(app).also { it.enabled = prefs.sound }
     var soundOn by mutableStateOf(prefs.sound); private set

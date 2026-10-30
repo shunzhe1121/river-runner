@@ -476,6 +476,14 @@ fun SettingsScreen(vm: AppViewModel) {
                     Pill("中文", st.isZh, { vm.setChinese(true) })
                     Pill("English", !st.isZh, { vm.setChinese(false) })
                 }
+                OptionRow(st.deckStyle) {
+                    Pill(st.deckFour, vm.deckStyle == DeckStyle.FOUR_COLOR, { vm.setDeck(DeckStyle.FOUR_COLOR) })
+                    Pill(st.deckFilled, vm.deckStyle == DeckStyle.FOUR_COLOR_FILLED, { vm.setDeck(DeckStyle.FOUR_COLOR_FILLED) })
+                    Pill(st.deckClassic, vm.deckStyle == DeckStyle.CLASSIC, { vm.setDeck(DeckStyle.CLASSIC) })
+                }
+                Row(Modifier.padding(start = 92.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    for (c in listOf("As", "Kh", "Qd", "Jc")) PlayingCard(Cards.parse(c), 40.dp)
+                }
                 OptionRow(st.speed) {
                     Pill(st.slow, speed == 0, { speed = 0; vm.prefs.speed = 0 })
                     Pill(st.normal, speed == 1, { speed = 1; vm.prefs.speed = 1 })
