@@ -1,5 +1,9 @@
 # River Runner ♠
 
+<p align="center">
+  <img src="docs/banner.png" alt="River Runner — Offline Texas Hold'em practice" width="100%">
+</p>
+
 A personal, fully offline Texas Hold'em trainer for Android — drill your ranges, sharpen your decisions, and run it to the river.
 
 单机德州扑克练习 App（安卓，横屏，开源）。
