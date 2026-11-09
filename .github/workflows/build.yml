@@ -15,7 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION_CODE: ${{ github.run_number }}
-      VERSION_NAME: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('0.2.{0}', github.run_number) }}
+      VERSION_NAME: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('0.3.{0}', github.run_number) }}
+      # Signing material is restored from secrets below and shredded afterwards.
+      RR_KEYSTORE_PATH: keystore/release.p12
+      RR_STORE_PASSWORD: ${{ secrets.RR_STORE_PASSWORD }}
+      RR_KEY_ALIAS: ${{ secrets.RR_KEY_ALIAS }}
+      RR_KEY_PASSWORD: ${{ secrets.RR_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,10 +34,28 @@ jobs:
       - name: Engine unit tests
         run: ./gradlew :engine:test --no-daemon
 
+      - name: Restore signing key
+        if: github.event_name != 'pull_request'
+        env:
+          RR_KEYSTORE_BASE64: ${{ secrets.RR_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$RR_KEYSTORE_BASE64" ]; then
+            echo "::error::Signing key not configured. Add the RR_KEYSTORE_BASE64 secret (base64 of keystore/release.p12)."
+            exit 1
+          fi
+          mkdir -p "$(dirname "$RR_KEYSTORE_PATH")"
+          printf '%s' "$RR_KEYSTORE_BASE64" | base64 -d > "$RR_KEYSTORE_PATH"
+          echo "signing key restored: $(wc -c < "$RR_KEYSTORE_PATH") bytes"
+
       - name: Build release APK
+        if: github.event_name != 'pull_request'
         run: |
           ./gradlew :app:assembleRelease --no-daemon 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
+
+      - name: Shred signing key
+        if: always()
+        run: rm -f "$RR_KEYSTORE_PATH"
 
       - name: Report build errors
         if: failure()
@@ -47,9 +70,18 @@ jobs:
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-logs
 
       - name: Rename APK
+        if: github.event_name != 'pull_request'
         run: cp app/build/outputs/apk/release/app-release.apk river-runner-${VERSION_NAME}.apk
 
+      - name: Print signer certificate
+        if: github.event_name != 'pull_request'
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          BUILD_TOOLS="$(ls -d "$SDK"/build-tools/* | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --print-certs river-runner-*.apk | tee signer.txt
+
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
           name: river-runner-apk
           path: river-runner-*.apk
@@ -59,10 +91,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          CERT=$(grep -m1 "SHA-256 digest" signer.txt | sed 's/.*digest: //')
+          NOTES="Automatic build of ${GITHUB_SHA::7}."
+          NOTES="${NOTES}"$'\n\n'"**签名密钥已在 0.3.0 更换**：从 0.2.x 升级请先卸载旧版本再安装，签名不同无法直接覆盖。"
+          NOTES="${NOTES}"$'\n\n'"Signing key changed at 0.3.0: uninstall the 0.2.x build before installing this one."
+          NOTES="${NOTES}"$'\n\n'"Signer certificate SHA-256: ${CERT}"
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest river-runner-*.apk --prerelease \
             --title "Latest build (${VERSION_NAME})" \
-            --notes "Automatic build of ${GITHUB_SHA::7}. 下载 APK 直接安装即可（可覆盖旧版本）。"
+            --notes "$NOTES"
 
       - name: Publish tagged release
         if: startsWith(github.ref, 'refs/tags/v')

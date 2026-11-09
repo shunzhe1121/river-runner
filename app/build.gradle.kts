@@ -19,12 +19,22 @@ android {
 
     signingConfigs {
         create("release") {
-            // Public signing key committed on purpose so every CI build can upgrade the
-            // previous install. This is a hobby/offline app; do not reuse this key elsewhere.
-            storeFile = rootProject.file("keystore/river-runner.jks")
-            storePassword = "riverrunner"
-            keyAlias = "river-runner"
-            keyPassword = "riverrunner"
+            // Signing material never lives in this repository. CI supplies it through
+            // Actions secrets; a local release build can read it from
+            // ~/.gradle/gradle.properties (rr.storeFile, rr.storePassword, rr.keyAlias,
+            // rr.keyPassword). With nothing configured, :app:assembleRelease fails
+            // instead of silently producing an unsigned APK.
+            val storePath = System.getenv("RR_KEYSTORE_PATH")
+                ?: project.providers.gradleProperty("rr.storeFile").orNull
+            if (storePath != null) {
+                storeFile = rootProject.file(storePath)
+                storePassword = System.getenv("RR_STORE_PASSWORD")
+                    ?: project.providers.gradleProperty("rr.storePassword").orNull
+                keyAlias = System.getenv("RR_KEY_ALIAS")
+                    ?: project.providers.gradleProperty("rr.keyAlias").orNull
+                keyPassword = System.getenv("RR_KEY_PASSWORD")
+                    ?: project.providers.gradleProperty("rr.keyPassword").orNull
+            }
         }
     }
 
@@ -33,9 +43,6 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
-        }
-        debug {
             signingConfig = signingConfigs.getByName("release")
         }
     }

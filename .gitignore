@@ -6,3 +6,10 @@ build/
 .DS_Store
 /captures
 .kotlin/
+
+# Signing material must never be committed. CI restores it from secrets into
+# keystore/release.p12 and deletes it after the build.
+keystore/
+*.jks
+*.keystore
+*.p12

@@ -99,7 +99,7 @@ An APK from a stranger's repository deserves suspicion. These are checkable, not
 - **No permissions at all.** [`AndroidManifest.xml`](app/src/main/AndroidManifest.xml) contains no `<uses-permission>` element — no `INTERNET`, no storage, no billing. It is 22 lines; read it.
 - **1.6 MB.** No ad SDK, no analytics SDK, no crash reporter to inflate it.
 - **Built by CI, not by hand.** Every push to `main` builds and publishes the `latest` release through GitHub Actions ([workflow](.github/workflows/build.yml)). The binary you download is the output of that job.
-- **Signed with a public key.** The keystore in [`keystore/`](keystore/) is committed on purpose so each update installs over the previous one. Don't reuse that key for anything else.
+- **Signed by CI with a key that is not in this repository.** The release key lives in repository secrets and is deleted from the runner after each build. The certificate SHA-256 is printed in every release note, so you can check the APK you downloaded yourself — see [Signing and verification](#signing-and-verification).
 - **sha256 is printed on the release**, next to the APK.
 
 它没有任何权限声明、不含广告和统计 SDK、由 CI 从本仓库源码构建、签名密钥公开。想核实，看上面这 22 行 AndroidManifest 就够了。
@@ -135,6 +135,21 @@ Styles (TAG, LAG, station, nit, maniac) shift range widths, aggression, bluffing
 ```
 
 Barlow Condensed is bundled under the SIL Open Font License (`licenses/`).
+
+## Signing and verification
+
+The APK is signed with a release key held in repository secrets. It is not in the source tree and not in the git history, so nobody can produce a build that Android accepts as an update to yours.
+
+```bash
+sha256sum river-runner-*.apk                      # compare with the release note
+apksigner verify --print-certs river-runner-*.apk # certificate SHA-256
+```
+
+The fingerprint from the second command must match the one in the release note. If it does not, the file did not come from this repository — do not install it.
+
+**Upgrading from 0.2.x / 从 0.2.x 升级：** the signing key was replaced at 0.3.0. Android will not install an update signed with a different key, so uninstall the old build first — its saves and hand history go with it. From 0.3.0 onward, updates install in place again.
+
+0.3.0 更换了签名密钥。Android 不允许跨签名的覆盖安装，所以从 0.2.x 升级需要先卸载旧版本（存档会一并删除）。0.3.0 之后的版本可以正常覆盖升级。
 
 ## If this is useful to you
 
