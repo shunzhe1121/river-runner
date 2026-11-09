@@ -88,7 +88,7 @@ River Runner 两者都不是：一个完全跑在手机本地的练习工具。�
 | **Stacks / 筹码** | Starting stack set in big blinds / 以大盲数设置起始筹码 |
 | **Table feel / 牌桌体验** | Dealing and card-flip animations, chips sliding to the pot and to the winner, pulsing turn indicator, vibration on your turn, live action log; every hand waits for **Next hand** / 发牌翻牌动画、筹码动画、行动提示与震动、行动记录 |
 | **Beginner guide / 新手指南** | Rules, hand rankings, positions, glossary, tips — also reachable from the table via **?** / 玩法、牌型、位置、术语、新手建议 |
-| **Boss key / 静音** | Sound toggle on the table / 牌桌上可开关音效 |
+| **Sound / 音效** | Synthesised game sounds, toggle on the table / 合成音效，牌桌上可开关 |
 
 </details>
 
