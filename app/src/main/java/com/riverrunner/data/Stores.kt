@@ -37,6 +37,11 @@ class Prefs(context: Context) {
         get() = sp.getString("deck", "4") ?: "4"
         set(v) = sp.edit().putString("deck", v).apply()
 
+    /** After every hand, open its replay before the next deal. */
+    var reviewEachHand: Boolean
+        get() = sp.getBoolean("review", false)
+        set(v) = sp.edit().putBoolean("review", v).apply()
+
     var showInBB: Boolean
         get() = sp.getBoolean("bb", true)
         set(v) = sp.edit().putBoolean("bb", v).apply()
@@ -255,6 +260,15 @@ class HistoryStore(private val file: File) {
         records[i] = updated
         rewrite()
         return updated
+    }
+
+    @Synchronized fun setFavorite(id: Long, value: Boolean): HandRecord? {
+        val i = records.indexOfFirst { it.id == id }
+        if (i < 0) return null
+        if (records[i].favorite == value) return records[i]
+        records[i] = records[i].copy(favorite = value)
+        rewrite()
+        return records[i]
     }
 
     @Synchronized fun clearNonFavorites() {

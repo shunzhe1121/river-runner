@@ -23,6 +23,27 @@ data class Action(
     val allIn: Boolean,
 )
 
+/**
+ * Bet-size class, measured against the pot before the bet. [center] is the
+ * nominal pot fraction the bot aims for; [of] buckets any amount into a class.
+ */
+enum class SizeClass(val center: Double) {
+    SMALL(0.33), MEDIUM(0.5), LARGE(0.75), POT(1.0), OVER(1.5);
+
+    companion object {
+        fun of(chips: Int, potBefore: Int): SizeClass {
+            val r = chips.toDouble() / kotlin.math.max(1, potBefore)
+            return when {
+                r < 0.42 -> SMALL
+                r < 0.62 -> MEDIUM
+                r < 0.87 -> LARGE
+                r < 1.2 -> POT
+                else -> OVER
+            }
+        }
+    }
+}
+
 enum class MoveType { FOLD, CHECK, CALL, RAISE }
 
 /** A decision taken by a player. For RAISE (also used for an opening bet), [raiseTo] is the street total. */

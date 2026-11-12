@@ -98,6 +98,8 @@ fun TableScreen(vm: AppViewModel) {
         onExit = { confirmExit = true },
         onHelp = { showGuide = true; vm.guideOpenedInGame() },
         onSound = { vm.setSound(!vm.soundOn) },
+        onStar = vm::toggleStarHand,
+        onReview = vm::setReviewEach,
     )
     if (confirmExit) {
         AlertDialog(
@@ -127,6 +129,8 @@ fun TableContent(
     onHelp: () -> Unit,
     animate: Boolean = true,
     onSound: () -> Unit = {},
+    onStar: () -> Unit = {},
+    onReview: (Boolean) -> Unit = {},
 ) {
     val st = LocalStrings.current
     val haptic = LocalHapticFeedback.current
@@ -153,7 +157,7 @@ fun TableContent(
                 )
             }
         }
-        SidePanel(ui, fmt, onMove, onNext, onFastForward, onPractice, onExit, onHelp, onSound)
+        SidePanel(ui, fmt, onMove, onNext, onFastForward, onPractice, onExit, onHelp, onSound, onStar, onReview)
     }
 }
 
@@ -168,6 +172,8 @@ private fun SidePanel(
     onExit: () -> Unit,
     onHelp: () -> Unit,
     onSound: () -> Unit,
+    onStar: () -> Unit,
+    onReview: (Boolean) -> Unit,
 ) {
     val st = LocalStrings.current
     val heroTurn = ui.legal != null
@@ -182,6 +188,8 @@ private fun SidePanel(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(st.handNo(ui.handNumber), color = Palette.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f))
+                RoundIcon(if (ui.starred) "★" else "☆", st.starHand, onStar)
+                Spacer(Modifier.width(4.dp))
                 RoundIcon(if (ui.soundOn) "🔊" else "🔇", st.sound, onSound)
                 Spacer(Modifier.width(4.dp))
                 RoundIcon("?", st.guide, onHelp)
@@ -199,6 +207,17 @@ private fun SidePanel(
             Text(st.practice, color = Palette.Text, fontSize = 12.sp, modifier = Modifier.weight(1f))
             Switch(
                 checked = ui.practice, onCheckedChange = onPractice, modifier = Modifier.scale(0.62f),
+                colors = SwitchDefaults.colors(checkedTrackColor = Palette.AccentDim, checkedThumbColor = Palette.Accent, uncheckedTrackColor = Palette.PanelHi2),
+            )
+        }
+        // review switch: open each hand's replay when it ends
+        Row(
+            Modifier.fillMaxWidth().height(26.dp).clip(RoundedCornerShape(8.dp)).background(Palette.PanelHi).padding(start = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(st.reviewEach, color = Palette.Text, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Switch(
+                checked = ui.reviewEach, onCheckedChange = onReview, modifier = Modifier.scale(0.62f),
                 colors = SwitchDefaults.colors(checkedTrackColor = Palette.AccentDim, checkedThumbColor = Palette.Accent, uncheckedTrackColor = Palette.PanelHi2),
             )
         }

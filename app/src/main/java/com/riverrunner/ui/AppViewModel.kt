@@ -142,6 +142,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         screen = Screen.Replay(r)
     }
 
+    /** True while a hand's replay is open between hands (review mode); leaving it resumes the game. */
+    var reviewing by mutableStateOf(false); private set
+    var reviewEachHand by mutableStateOf(prefs.reviewEachHand); private set
+    fun setReviewEach(v: Boolean) { prefs.reviewEachHand = v; reviewEachHand = v }
+
     var screen by mutableStateOf<Screen>(Screen.Home)
     var strings by mutableStateOf(if (prefs.chinese) ZH else EN); private set
     var showInBB by mutableStateOf(prefs.showInBB); private set
@@ -189,6 +194,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             handOver = handOver, actingName = actingName, heroInHand = heroInHand,
             fastForward = fastForward, sessionOver = sessionOver,
             notice = notice, soundOn = soundOn,
+            starred = starHand, reviewEach = reviewEachHand,
         )
 
     private var session: GameSession? = null
@@ -197,6 +203,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     private var heroMove: CompletableDeferred<Move>? = null
     private var nextHandSignal: CompletableDeferred<Unit>? = null
     private var quitRequested = false
+    /** Star for the hand in play; applied when the hand is saved. */
+    private var starHand by mutableStateOf(false)
+    /** History id of the hand that just ended, so a late star still reaches it. */
+    private var lastRecordId: Long? = null
     private var handKey = 0L
     private var actionSeq = 0
 
@@ -208,6 +218,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val s = GameSession(config)
         session = s
         quitRequested = false
+        reviewing = false
+        starHand = false
+        lastRecordId = null
         practice = prefs.practiceDefault
         sessionOver = false
         notice = null
@@ -225,6 +238,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun heroAct(move: Move) { heroMove?.complete(move) }
 
     fun continueToNextHand() { nextHandSignal?.complete(Unit) }
+
+    /** Leaves the between-hands replay and deals the next hand. */
+    fun continueFromReview() {
+        if (!reviewing) return
+        reviewing = false
+        screen = Screen.Table
+        nextHandSignal?.complete(Unit)
+    }
 
     fun requestQuit() {
         quitRequested = true
@@ -286,6 +307,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             updateBlinds(s)
             log.clear()
             handOver = null
+            starHand = false
+            lastRecordId = null
             heroInHand = true
             fastForward = false
             legal = null
@@ -377,10 +400,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             legal = null
             actingName = null
             val infosBefore = seatInfos(s)
-            val rec = s.completeHand(e)
+            val built = s.completeHand(e)
+            val rec = if (starHand) built.copy(favorite = true) else built
             val store = history
             withContext(Dispatchers.IO) { store.add(rec) }
+            lastRecordId = rec.id
             record(withContext(Dispatchers.Default) { runCatching { Facts.forHand(rec) }.getOrDefault(emptyMap()) })
+            if (rec.favorite) record(mapOf(Progress.STARS to 1L))
             val bb = e.bigBlind
             val betsOut = e.players.any { it.streetBet > 0 }
             val wasFast = fastForward
@@ -399,6 +425,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             if (!quitRequested) {
                 val sig = CompletableDeferred<Unit>()
                 nextHandSignal = sig
+                if (reviewEachHand) {
+                    record(mapOf(Progress.REPLAYS to 1L))
+                    reviewing = true
+                    screen = Screen.Replay(rec)
+                }
                 sig.await()
                 nextHandSignal = null
             }
@@ -415,6 +446,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val r = history.toggleFavorite(id)
         if (r?.favorite == true) record(mapOf(Progress.STARS to 1L))
         return r
+    }
+
+    /** Stars the hand on the table: before it is saved, or the hand that just ended. */
+    fun toggleStarHand() {
+        starHand = !starHand
+        lastRecordId?.let { id ->
+            val r = history.setFavorite(id, starHand)
+            if (r?.favorite == true) record(mapOf(Progress.STARS to 1L))
+        }
     }
 
     fun actionLabel(a: Action, bb: Int): String = TableMapper.actionLabel(strings, a) { fmt(it, bb) }

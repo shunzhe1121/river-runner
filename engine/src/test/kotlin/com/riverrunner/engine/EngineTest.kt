@@ -171,6 +171,36 @@ class EngineTest {
     }
 }
 
+class SizeClassTest {
+    @Test fun bucketsByPotFraction() {
+        assertEquals(SizeClass.SMALL, SizeClass.of(33, 100))
+        assertEquals(SizeClass.MEDIUM, SizeClass.of(50, 100))
+        assertEquals(SizeClass.LARGE, SizeClass.of(75, 100))
+        assertEquals(SizeClass.POT, SizeClass.of(100, 100))
+        assertEquals(SizeClass.OVER, SizeClass.of(150, 100))
+    }
+
+    @Test fun botBetsMixSizes() {
+        // heads-up, limp to the flop: the first player to act on the flop may bet, and the bet sizes should vary
+        val setup = HandSetup(50, 100, 0, 0, listOf(SeatSetup(0, "P0", 2000), SeatSetup(1, "P1", 2000)))
+        val e = HandEngine(setup, PresetCardSource(
+            mapOf(0 to Cards.parseMany("AsKs"), 1 to Cards.parseMany("QdQs")),
+            Cards.parseMany("Qh9h4h8c3d"),
+        ))
+        e.apply(Move.raiseTo(400))   // a big pot, so small bets are above the minimum bet
+        e.apply(Move.CALL)
+        while (e.phase == Phase.STREET_DONE) e.dealNextStreet()
+        assertEquals(Street.FLOP, e.street)
+        val sizes = mutableSetOf<SizeClass>()
+        repeat(60) { i ->
+            val p = Bot.decide(e, e.toAct, BotStyle.GTO, Random(i))
+            p.options.filter { it.first.type == MoveType.RAISE }
+                .forEach { sizes += SizeClass.of(it.first.raiseTo, p.pot) }
+        }
+        assertTrue(sizes.size >= 2, "expected at least two bet-size classes, got $sizes")
+    }
+}
+
 class EquityIcmTest {
     @Test fun aaVsKk() {
         val eq = Equity.showdown(listOf(Cards.parseMany("AsAh"), Cards.parseMany("KsKh")), emptyList(), Random(1), 40000)

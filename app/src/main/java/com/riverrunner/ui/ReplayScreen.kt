@@ -40,6 +40,7 @@ import com.riverrunner.engine.MoveType
 import com.riverrunner.engine.Policy
 import com.riverrunner.engine.ReplayFrame
 import com.riverrunner.engine.Replayer
+import com.riverrunner.engine.SizeClass
 import com.riverrunner.i18n.LocalStrings
 import com.riverrunner.i18n.Strings
 import kotlinx.coroutines.Dispatchers
@@ -48,14 +49,31 @@ import kotlin.random.Random
 
 @Composable
 fun ReplayScreen(vm: AppViewModel, initial: HandRecord) {
-    BackHandler { vm.screen = Screen.History }
+    // during review mode the replay sits between hands: leaving it deals the next one
+    val leave: () -> Unit = {
+        if (vm.reviewing) {
+            vm.continueFromReview()
+        } else {
+            vm.screen = Screen.History
+        }
+    }
+    BackHandler(onBack = leave)
     var record by remember { mutableStateOf(initial) }
     ReplayContent(
         record = record,
         fmt = { vm.fmt(it, record.bigBlind) },
-        onBack = { vm.screen = Screen.History },
+        onBack = leave,
         onStar = { vm.toggleFavorite(record.id)?.let { record = it } },
+        onContinue = if (vm.reviewing) vm::continueFromReview else null,
     )
+}
+
+private fun sizeName(st: Strings, c: SizeClass): String = when (c) {
+    SizeClass.SMALL -> st.sizeSmall
+    SizeClass.MEDIUM -> st.sizeMedium
+    SizeClass.LARGE -> st.sizeLarge
+    SizeClass.POT -> st.sizePot
+    SizeClass.OVER -> st.sizeOver
 }
 
 /** Builds the table picture for one replay frame. */
@@ -120,7 +138,14 @@ fun replayLog(st: Strings, record: HandRecord, frames: List<ReplayFrame>, fmt: (
 }
 
 @Composable
-fun ReplayContent(record: HandRecord, fmt: (Int) -> String, onBack: () -> Unit, onStar: () -> Unit, startIndex: Int = 0) {
+fun ReplayContent(
+    record: HandRecord,
+    fmt: (Int) -> String,
+    onBack: () -> Unit,
+    onStar: () -> Unit,
+    startIndex: Int = 0,
+    onContinue: (() -> Unit)? = null,
+) {
     val st = LocalStrings.current
     val replayer = remember(record.id) { Replayer(record) }
     val frames = replayer.frames
@@ -175,15 +200,19 @@ fun ReplayContent(record: HandRecord, fmt: (Int) -> String, onBack: () -> Unit, 
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SmallButton("←", onBack)
-                Text(
-                    "  ${st.replay} · ${com.riverrunner.engine.Stats.positionOf(record)}", color = Palette.Text, fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1,
-                )
-                Text(
-                    if (record.favorite) "★" else "☆", color = Palette.Gold, fontSize = 22.sp,
-                    modifier = Modifier.pressable(onClick = onStar).padding(horizontal = 4.dp),
-                )
+                Column(Modifier.weight(1f).padding(start = 6.dp)) {
+                    Text(
+                        "${st.replay} · ${st.handNo(record.handNumber)}", color = Palette.Text, fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold, maxLines = 1,
+                    )
+                    Text(com.riverrunner.engine.Stats.positionOf(record), color = Palette.TextDim, fontSize = 11.sp, maxLines = 1)
+                }
             }
+            // starring is labelled and sits right under the title, so a hand is easy to find again in History
+            SmallButton(
+                (if (record.favorite) "★ " else "☆ ") + st.starHand, onStar, Modifier.fillMaxWidth(),
+                highlight = record.favorite,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
                 SmallButton("⏮", { idx = 0 }, Modifier.weight(1f))
                 SmallButton("◀", { if (idx > 0) idx-- }, Modifier.weight(1.3f))
@@ -192,6 +221,9 @@ fun ReplayContent(record: HandRecord, fmt: (Int) -> String, onBack: () -> Unit, 
             }
             if (heroAction != null) AnalysisCard(heroAction, frame.action?.seat == record.heroSeat, policy, fmt)
             ActionLog(log, Modifier.weight(1f), highlightIndex = idx, onClick = { idx = it })
+            if (onContinue != null) {
+                ActionButton(st.reviewNext, Palette.Gold, Modifier.fillMaxWidth(), textColor = Palette.Ink, onClick = onContinue)
+            }
         }
     }
 }
@@ -218,6 +250,14 @@ private fun AnalysisCard(heroAction: Action, decided: Boolean, policy: Policy?, 
             }
         }
         Text("${st.gtoSuggest}: " + parts.joinToString(" / "), color = Palette.Accent, fontSize = 13.sp)
+        // bet-size mix of the raises, measured against the pot before the decision
+        val sizes = policy.options.filter { it.first.type == MoveType.RAISE }
+            .groupBy { SizeClass.of(it.first.raiseTo, policy.pot) }
+            .mapValues { e -> e.value.sumOf { it.second } }
+        if (sizes.isNotEmpty()) {
+            val line = SizeClass.entries.mapNotNull { c -> sizes[c]?.let { "${sizeName(st, c)} ${Format.pct(it)}" } }
+            Text("${st.gtoSizing}: " + line.joinToString(" / "), color = Palette.Accent, fontSize = 12.sp)
+        }
         if (decided) {
             val t = when (heroAction.type) {
                 ActionType.FOLD -> MoveType.FOLD; ActionType.CHECK -> MoveType.CHECK
@@ -228,6 +268,14 @@ private fun AnalysisCard(heroAction: Action, decided: Boolean, policy: Policy?, 
                 if (ok) "✓ ${st.inLine}" else "⚠ ${st.deviation}",
                 color = if (ok) Palette.Green else Palette.Red, fontSize = 12.sp, fontWeight = FontWeight.Bold,
             )
+            if (t == MoveType.RAISE) {
+                val mine = SizeClass.of(heroAction.streetTotal, policy.pot)
+                val sizeOk = (sizes[mine] ?: 0.0) >= 0.08
+                Text(
+                    if (sizeOk) "✓ ${sizeName(st, mine)}" else "⚠ ${st.sizeOff}: ${sizeName(st, mine)}",
+                    color = if (sizeOk) Palette.Green else Palette.Red, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                )
+            }
         }
         policy.equity?.let { Text("${st.estEquity}: ${Format.pct(it)}", color = Palette.TextDim, fontSize = 11.sp) }
         if (policy.potOdds > 0) Text("${st.needEquity}: ${Format.pct(policy.potOdds)}", color = Palette.TextDim, fontSize = 11.sp)

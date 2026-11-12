@@ -50,6 +50,8 @@ class Policy(
     val potOdds: Double,
     /** required equity under ICM when it applied */
     val icmRequired: Double?,
+    /** pot when the decision was made, used to classify bet sizes */
+    val pot: Int = 0,
 ) {
     fun sample(random: Random): Move {
         var r = random.nextDouble()
@@ -319,8 +321,43 @@ object Bot {
     ): Policy {
         val la = engine.legalActions()
         require(la.seat == seat)
-        return if (engine.street == Street.PREFLOP) preflop(engine, seat, style, la, random, tournament)
+        val p = if (engine.street == Street.PREFLOP) preflop(engine, seat, style, la, random, tournament)
         else postflop(engine, seat, style, la, random, tournament)
+        return Policy(p.options, p.equity, p.potOdds, p.icmRequired, la.pot)
+    }
+
+    /**
+     * Size mix for bets, indexed by [SizeClass] (SMALL..OVER). Value hands lean
+     * larger on wet boards; bluffs lean small. The overlap keeps bet size from
+     * telling the player what the hand is.
+     */
+    private val VALUE_SIZES_WET = doubleArrayOf(0.1, 0.2, 0.3, 0.25, 0.15)
+    private val VALUE_SIZES_MID = doubleArrayOf(0.15, 0.3, 0.3, 0.2, 0.05)
+    private val VALUE_SIZES_DRY = doubleArrayOf(0.25, 0.35, 0.25, 0.12, 0.03)
+    private val BLUFF_SIZES = doubleArrayOf(0.4, 0.35, 0.15, 0.1, 0.0)
+
+    private fun betSizeWeights(value: Boolean, wet: Double, street: Street, nOpp: Int): DoubleArray {
+        val w = when {
+            !value -> BLUFF_SIZES.copyOf()
+            wet >= 0.5 -> VALUE_SIZES_WET.copyOf()
+            wet >= 0.25 -> VALUE_SIZES_MID.copyOf()
+            else -> VALUE_SIZES_DRY.copyOf()
+        }
+        // no overbets on the flop/turn, and none into several players
+        if (street != Street.RIVER || nOpp >= 2) {
+            w[3] += w[4]; w[4] = 0.0
+        }
+        if (nOpp >= 2) {
+            w[2] += w[3]; w[3] = 0.0
+        }
+        return w
+    }
+
+    /** Raise multipliers (of the current bet) and their mix, facing a bet. */
+    private fun raiseSizes(value: Boolean, street: Street): Pair<DoubleArray, DoubleArray> {
+        val mults = if (street == Street.RIVER) doubleArrayOf(2.2, 2.5, 3.0) else doubleArrayOf(2.5, 3.0, 3.5)
+        val w = if (value) doubleArrayOf(0.3, 0.4, 0.3) else doubleArrayOf(0.5, 0.35, 0.15)
+        return mults to w
     }
 
     private fun normalized(opts: List<Pair<Move, Double>>): List<Pair<Move, Double>> {
@@ -442,7 +479,10 @@ object Bot {
                 effBB < 30 -> 2.2
                 else -> 2.5
             } + limpers
-            opts += raiseMove(la, (openBB * bb).toInt()) to pRaise
+            // open sizes vary a little so the opening raise is not a fixed tell
+            for ((m, w) in listOf(0.9 to 0.3, 1.0 to 0.4, 1.2 to 0.3)) {
+                opts += raiseMove(la, (openBB * m * bb).toInt()) to pRaise * w
+            }
             // passive styles sometimes limp
             if (style == BotStyle.STATION || style == BotStyle.MANIAC) {
                 val pLimp = smooth(pct, thr * 1.5, 0.03) * (1 - pRaise) * 0.6
@@ -526,7 +566,8 @@ object Bot {
         val opps = engine.players.filter { !it.folded && it.seat != seat }
         val nOpp = opps.size
         val eq = equityVsField(engine, seat, random, if (nOpp >= 3) 220 else 320)
-        val rel = eq * (nOpp + 1) / 2.0   // 1.0 = "fair share" heads-up equivalent
+        // 1.0 = a fair share of the pot: 1/(players) equity, scaled to heads-up (0.5 -> 1.0)
+        val rel = eq * (nOpp + 1)
         val cls = handClass(me.hole, board)
         val wet = wetness(board)
         val pot = la.pot
@@ -544,14 +585,10 @@ object Bot {
         if (la.toCall == 0) {
             // ---------------- we can check or bet
             if (!la.canRaise) return Policy(listOf(Move.CHECK to 1.0), eq, 0.0, null)
-            val frac = when (street) {
-                Street.FLOP -> if (nOpp >= 2) 0.5 else if (wet < 0.3) 0.33 else if (wet < 0.6) 0.5 else 0.75
-                Street.TURN -> if (wet >= 0.5) 0.75 else 0.66
-                else -> if (rel > 1.75) 1.0 else 0.75
-            }
             val valueThr = when (street) { Street.FLOP -> 1.22; Street.TURN -> 1.3; else -> 1.4 }
             var pBet = above(rel, valueThr, 0.06) * min(1.0, 0.85 * style.aggression + 0.1)
             if (cls == 4 && street == Street.FLOP && wet < 0.3 && nOpp == 1) pBet *= 0.7 // some slow-playing
+            val pValue = pBet
             if (rel < valueThr) {
                 val bluff: Double = when {
                     cls == 1 && street != Street.RIVER -> 0.5
@@ -565,9 +602,20 @@ object Bot {
                 pBet = max(pBet, bluff * style.bluff * multi * medium)
             }
             pBet = pBet.coerceIn(0.0, 0.97)
-            val sizeChips = (pot * frac).toInt().coerceAtLeast(engine.bigBlind)
-            val betTo = if (spr < 1.3 && rel > valueThr) la.maxRaiseTo else sizeChips
-            opts += raiseMove(la, betTo) to pBet
+            if (spr < 1.3 && rel > valueThr) {
+                opts += raiseMove(la, la.maxRaiseTo) to pBet
+            } else if (pBet > 0) {
+                val vShare = (pValue / max(1e-9, pBet)).coerceIn(0.0, 1.0)
+                val wV = betSizeWeights(true, wet, street, nOpp)
+                val wB = betSizeWeights(false, wet, street, nOpp)
+                for (size in SizeClass.entries) {
+                    val i = size.ordinal
+                    val w = vShare * wV[i] + (1 - vShare) * wB[i]
+                    if (w <= 0) continue
+                    val chips = (pot * size.center).toInt().coerceAtLeast(engine.bigBlind)
+                    opts += raiseMove(la, chips) to pBet * w
+                }
+            }
             opts += Move.CHECK to (1 - pBet)
             return Policy(normalized(opts), eq, 0.0, null)
         }
@@ -580,9 +628,11 @@ object Bot {
         val eqEff = eq * realization + implied + style.callBias
         val raiseThr = when (street) { Street.FLOP -> 1.45; Street.TURN -> 1.52; else -> 1.6 }
         var pRaise = 0.0
+        var pValueRaise = 0.0
         if (la.canRaise) {
             pRaise = above(rel, raiseThr, 0.05) * min(1.0, 0.65 * style.aggression)
             if (cls == 4 && street == Street.FLOP && wet < 0.3) pRaise *= 0.6
+            pValueRaise = pRaise
             val bluffRaise = when {
                 cls == 1 && street == Street.FLOP -> 0.12
                 cls == 1 && street == Street.TURN -> 0.06
@@ -595,11 +645,20 @@ object Bot {
         // minimum-defence guard vs small bets with real hands (GTO-ish)
         if (potOdds < 0.22 && cls >= 2) pCall = max(pCall, 0.85)
         pCall *= (1 - pRaise)
-        val raiseTarget = when (street) {
-            Street.RIVER -> (la.currentBet * 2.5).toInt()
-            else -> (la.currentBet * 3).toInt()
-        }.coerceAtLeast(la.minRaiseTo)
-        if (pRaise > 0) opts += raiseMove(la, if (spr < 2.0) la.maxRaiseTo else raiseTarget) to pRaise
+        if (pRaise > 0) {
+            if (spr < 2.0) {
+                opts += raiseMove(la, la.maxRaiseTo) to pRaise
+            } else {
+                val vShare = (pValueRaise / max(1e-9, pRaise)).coerceIn(0.0, 1.0)
+                val (mults, wValue) = raiseSizes(true, street)
+                val (_, wBluff) = raiseSizes(false, street)
+                for (i in mults.indices) {
+                    val w = vShare * wValue[i] + (1 - vShare) * wBluff[i]
+                    val target = (la.currentBet * mults[i]).toInt().coerceAtLeast(la.minRaiseTo)
+                    opts += raiseMove(la, target) to pRaise * w
+                }
+            }
+        }
         opts += Move.CALL to pCall
         opts += Move.FOLD to (1 - pRaise - pCall).coerceAtLeast(0.0)
         return Policy(normalized(opts), eq, potOdds, icm)

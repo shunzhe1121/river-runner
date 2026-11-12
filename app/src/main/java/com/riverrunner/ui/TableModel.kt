@@ -91,6 +91,10 @@ data class TableScreenUi(
     val sessionOver: Boolean,
     /** short message shown over the table, e.g. blinds going up */
     val notice: String? = null,
+    /** this hand is starred (kept in history) */
+    val starred: Boolean = false,
+    /** open each hand's replay after it ends */
+    val reviewEach: Boolean = false,
     val soundOn: Boolean = true,
 )
 
