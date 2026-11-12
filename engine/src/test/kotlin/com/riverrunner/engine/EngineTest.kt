@@ -201,6 +201,57 @@ class SizeClassTest {
     }
 }
 
+class ChangelogTest {
+    @Test fun parsesSectionsAndLanguages() {
+        val text = """
+            # Changelog
+            intro line that is ignored
+            - not an item either
+
+            ## 0.4 · 2026-11-11
+            ### 新增 | Added
+            - 中文一 | English one
+            - only one language
+            ### 修复 | Fixed
+            - 修复 | Fix
+
+            ## 0.3
+            ### 改进 | Changed
+            - 甲 | A
+        """.trimIndent()
+        val r = Changelog.parse(text)
+        assertEquals(listOf("0.4", "0.3"), r.map { it.version })
+        assertEquals("2026-11-11", r[0].date)
+        assertEquals("", r[1].date)
+        assertEquals(2, r[0].sections.size)
+        assertEquals("新增", r[0].sections[0].title.zh)
+        assertEquals("Added", r[0].sections[0].title.en)
+        assertEquals("English one", r[0].sections[0].items[0].text(chinese = false))
+        assertEquals("only one language", r[0].sections[0].items[1].zh)
+        assertEquals("A", r[1].sections[0].items[0].en)
+    }
+
+    /** The real CHANGELOG.md must parse, start with the newest version and give every line both languages. */
+    @Test fun repositoryChangelogIsWellFormed() {
+        var dir: java.io.File? = java.io.File(System.getProperty("user.dir")).absoluteFile
+        var file: java.io.File? = null
+        while (dir != null && file == null) {
+            file = java.io.File(dir, "CHANGELOG.md").takeIf { it.exists() }
+            dir = dir.parentFile
+        }
+        if (file == null) return  // not run from inside the repository
+        val releases = Changelog.parse(file.readText())
+        assertTrue(releases.isNotEmpty(), "no releases found")
+        assertTrue(Regex("""\d+\.\d+""").matches(releases[0].version), "top version must be major.minor: ${releases[0].version}")
+        for (rel in releases) {
+            assertTrue(rel.sections.isNotEmpty(), "${rel.version} has no sections")
+            for (s in rel.sections) for (item in s.items) {
+                assertTrue(item.zh != item.en, "${rel.version}: missing ' | ' translation in: ${item.zh}")
+            }
+        }
+    }
+}
+
 class EquityIcmTest {
     @Test fun aaVsKk() {
         val eq = Equity.showdown(listOf(Cards.parseMany("AsAh"), Cards.parseMany("KsKh")), emptyList(), Random(1), 40000)

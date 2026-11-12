@@ -68,6 +68,32 @@ android {
     }
 }
 
+/** Copies the repository's CHANGELOG.md into the APK as assets/changelog.md (read by "What's new"). */
+abstract class CopyChangelog : DefaultTask() {
+    @get:InputFile
+    abstract val changelog: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val out = outputDir.get().asFile
+        out.mkdirs()
+        changelog.get().asFile.copyTo(File(out, "changelog.md"), overwrite = true)
+    }
+}
+
+val copyChangelog = tasks.register<CopyChangelog>("copyChangelog") {
+    changelog.set(rootProject.layout.projectDirectory.file("CHANGELOG.md"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(copyChangelog, CopyChangelog::outputDir)
+    }
+}
+
 dependencies {
     implementation(project(":engine"))
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))

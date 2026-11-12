@@ -19,6 +19,7 @@ import com.riverrunner.data.Prefs
 import com.riverrunner.engine.Action
 import com.riverrunner.engine.ActionType
 import com.riverrunner.engine.Bot
+import com.riverrunner.engine.Changelog
 import com.riverrunner.engine.GameMode
 import com.riverrunner.engine.GameSession
 import com.riverrunner.engine.HandEngine
@@ -140,6 +141,31 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun openReplay(r: HandRecord) {
         record(mapOf(Progress.REPLAYS to 1L))
         screen = Screen.Replay(r)
+    }
+
+    // ------------------------------------------------------------------ what's new
+    /** CHANGELOG.md, packed into the APK as assets/changelog.md. Newest release first. */
+    val changelog: List<Changelog.Release> = runCatching {
+        app.assets.open("changelog.md").bufferedReader().use { Changelog.parse(it.readText()) }
+    }.getOrDefault(emptyList())
+
+    /** Releases shown in the "What's new" dialog, or null when it is closed. */
+    var whatsNew by mutableStateOf<List<Changelog.Release>?>(null); private set
+
+    init {
+        // Once per version after an update. A fresh install (nothing played yet) skips it.
+        val latest = changelog.firstOrNull()?.version
+        if (latest != null && prefs.seenChangelog != latest) {
+            val freshInstall = prefs.seenChangelog.isEmpty() && profile.counters.isEmpty() && history.count() == 0
+            if (freshInstall) prefs.seenChangelog = latest else whatsNew = changelog.take(1)
+        }
+    }
+
+    fun showChangelog() { whatsNew = changelog }
+
+    fun dismissWhatsNew() {
+        whatsNew = null
+        changelog.firstOrNull()?.let { prefs.seenChangelog = it.version }
     }
 
     /** True while a hand's replay is open between hands (review mode); leaving it resumes the game. */

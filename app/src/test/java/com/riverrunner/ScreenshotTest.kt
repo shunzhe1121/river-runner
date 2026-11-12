@@ -343,4 +343,30 @@ class ScreenshotTest {
         val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
         shot("15_home") { HomeScreen(vm) }
     }
+
+    /** CHANGELOG.md must be packed into the APK assets, and the "What's new" card must lay out. */
+    @Test fun t27_whats_new() {
+        val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
+        org.junit.Assert.assertTrue("changelog.md is not in the app assets", vm.changelog.isNotEmpty())
+        shot("27_whats_new") {
+            androidx.compose.foundation.layout.Box(
+                androidx.compose.ui.Modifier.fillMaxSize().background(com.riverrunner.ui.Palette.Bg).padding(16.dp),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                com.riverrunner.ui.ChangelogPanel(vm.changelog.take(1), {}, onShowAll = {})
+            }
+        }
+    }
+
+    @Test fun t28_changelog_all_en() {
+        val vm = AppViewModel(ApplicationProvider.getApplicationContext<Application>())
+        shot("28_changelog_all_en", EN) {
+            androidx.compose.foundation.layout.Box(
+                androidx.compose.ui.Modifier.fillMaxSize().background(com.riverrunner.ui.Palette.Bg).padding(16.dp),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                com.riverrunner.ui.ChangelogPanel(vm.changelog, {})
+            }
+        }
+    }
 }

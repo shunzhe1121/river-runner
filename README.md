@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://github.com/shunzhe1121/river-runner/releases/tag/latest"><img alt="Download the latest APK (1.6 MB)" src="https://img.shields.io/badge/%E2%AC%87%20Download%20APK-1.6%20MB-E6B54F?style=for-the-badge&labelColor=0C1310&logo=android&logoColor=0C1310"></a>
   <br>
-  <sub><a href="https://github.com/shunzhe1121/river-runner/releases/tag/latest">Direct APK link</a> · <a href="https://github.com/shunzhe1121/river-runner/releases">all releases</a> · Android 8.0+</sub>
+  <sub><a href="https://github.com/shunzhe1121/river-runner/releases/tag/latest">Direct APK link</a> · <a href="https://github.com/shunzhe1121/river-runner/releases">all releases</a> · <a href="CHANGELOG.md">更新日志 / changelog</a> · Android 8.0+</sub>
 </p>
 
 <p align="center">

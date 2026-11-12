@@ -20,6 +20,7 @@ import com.riverrunner.ui.SavesScreen
 import com.riverrunner.ui.SetupScreen
 import com.riverrunner.ui.AchievementsScreen
 import com.riverrunner.ui.UnlockToast
+import com.riverrunner.ui.WhatsNewDialog
 import androidx.compose.ui.Alignment
 import com.riverrunner.ui.HistoryScreen
 import com.riverrunner.ui.HomeScreen
@@ -59,6 +60,13 @@ class MainActivity : ComponentActivity() {
                             Screen.Setup -> SetupScreen(vm)
                         }
                         UnlockToast(vm.unlockToast, Modifier.align(Alignment.TopCenter))
+                        vm.whatsNew?.let { shown ->
+                            WhatsNewDialog(
+                                shown,
+                                onDismiss = vm::dismissWhatsNew,
+                                onShowAll = if (shown.size < vm.changelog.size) vm::showChangelog else null,
+                            )
+                        }
                     }
                 }
             }

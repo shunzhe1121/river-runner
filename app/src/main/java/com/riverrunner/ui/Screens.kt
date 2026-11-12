@@ -501,6 +501,14 @@ fun SettingsScreen(vm: AppViewModel) {
                 Text(st.aboutText, color = Palette.Text, fontSize = 13.sp, lineHeight = 19.sp)
                 Spacer(Modifier.height(8.dp))
                 Text("github.com/shunzhe1121/river-runner", color = Palette.TextDim, fontSize = 12.sp)
+                Spacer(Modifier.height(14.dp))
+                val ctx = androidx.compose.ui.platform.LocalContext.current
+                val version = remember {
+                    runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: "?"
+                }
+                Text(st.currentVersion(version), color = Palette.TextDim, fontSize = 12.sp, fontFamily = Numeric)
+                Spacer(Modifier.height(6.dp))
+                SmallButton(st.whatsNew, { vm.showChangelog() })
             }
         }
     }

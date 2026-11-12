@@ -37,6 +37,11 @@ class Prefs(context: Context) {
         get() = sp.getString("deck", "4") ?: "4"
         set(v) = sp.edit().putString("deck", v).apply()
 
+    /** Newest changelog version the player has already seen in "What's new" ("" = never shown). */
+    var seenChangelog: String
+        get() = sp.getString("seen_changelog", "") ?: ""
+        set(v) = sp.edit().putString("seen_changelog", v).apply()
+
     /** After every hand, open its replay before the next deal. */
     var reviewEachHand: Boolean
         get() = sp.getBoolean("review", false)
