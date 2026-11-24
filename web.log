@@ -1,0 +1,280 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Configuration 'jsNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Configuration 'jsTestNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Build was configured to prefer settings repositories over project repositories but repository 'Distributions at https://nodejs.org/dist' was added by unknown code
+Build was configured to prefer settings repositories over project repositories but repository 'Distributions at https://github.com/yarnpkg/yarn/releases/download' was added by unknown code
+Configuration 'wasmJsNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Configuration 'wasmJsTestNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Build was configured to prefer settings repositories over project repositories but repository 'Distributions at https://nodejs.org/dist' was added by unknown code
+Build was configured to prefer settings repositories over project repositories but repository 'Distributions at https://github.com/yarnpkg/yarn/releases/download' was added by unknown code
+Build was configured to prefer settings repositories over project repositories but repository 'Distributions at https://github.com/WebAssembly/binaryen/releases/download' was added by unknown code
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup
+> Task :kotlinRestoreYarnLock SKIPPED
+> Task :kotlinYarnSetup
+> Task :engine:jsPackageJson
+> Task :engine:jsTestPackageJson
+> Task :ui:jsPackageJson
+> Task :ui:jsTestPackageJson
+> Task :web:jsPackageJson
+> Task :web:jsTestPackageJson
+> Task :engine:jsPublicPackageJson
+> Task :engine:jsTestPublicPackageJson
+> Task :ui:jsPublicPackageJson
+> Task :ui:jsTestPublicPackageJson
+> Task :web:jsPublicPackageJson
+> Task :web:jsTestPublicPackageJson
+> Task :kotlinPackageJsonUmbrella
+> Task :rootPackageJson
+
+> Task :kotlinNpmInstall
+(node:2580) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-engine-test > karma > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-engine-test > mocha > glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-engine-test > karma-webpack > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-engine-test > karma > rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-engine-test > karma > rimraf > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-engine-test > karma > glob > inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+warning workspace-aggregator-eb213547-a796-4a30-bb17-c64312725a7f > river-runner-web > webpack-dev-server > sockjs > uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+warning Ignored scripts due to flag.
+
+> Task :kotlinStoreYarnLock
+> Task :ui:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :ui:copyNonXmlValueResourcesForCommonMain NO-SOURCE
+> Task :ui:prepareComposeResourcesTaskForCommonMain NO-SOURCE
+> Task :ui:convertXmlValueResourcesForJsMain NO-SOURCE
+> Task :ui:copyNonXmlValueResourcesForJsMain NO-SOURCE
+> Task :ui:prepareComposeResourcesTaskForJsMain NO-SOURCE
+> Task :ui:convertXmlValueResourcesForWebMain NO-SOURCE
+> Task :ui:copyNonXmlValueResourcesForWebMain NO-SOURCE
+> Task :ui:prepareComposeResourcesTaskForWebMain NO-SOURCE
+> Task :ui:assembleJsMainResources
+> Task :ui:jsCopyHierarchicalMultiplatformResources
+> Task :ui:jsZipMultiplatformResourcesForPublication
+> Task :web:jsResolveResourcesFromDependencies
+> Task :web:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :web:copyNonXmlValueResourcesForCommonMain
+> Task :web:prepareComposeResourcesTaskForCommonMain
+> Task :web:convertXmlValueResourcesForJsMain NO-SOURCE
+> Task :web:copyNonXmlValueResourcesForJsMain NO-SOURCE
+> Task :web:prepareComposeResourcesTaskForJsMain NO-SOURCE
+> Task :web:convertXmlValueResourcesForWebMain NO-SOURCE
+> Task :web:copyNonXmlValueResourcesForWebMain NO-SOURCE
+> Task :web:prepareComposeResourcesTaskForWebMain NO-SOURCE
+> Task :web:assembleJsMainResources
+> Task :web:jsResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :web:jsAggregateResources
+> Task :web:unpackSkikoWasmRuntime
+> Task :web:jsProcessResources
+> Task :engine:kmpPartiallyResolvedDependenciesChecker
+> Task :engine:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:kmpPartiallyResolvedDependenciesChecker
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:generateResourceAccessorsForCommonMain SKIPPED
+> Task :ui:generateResourceAccessorsForJsMain SKIPPED
+> Task :ui:generateResourceAccessorsForWebMain SKIPPED
+> Task :ui:generateActualResourceCollectorsForJsMain SKIPPED
+> Task :ui:generateComposeResClass SKIPPED
+> Task :ui:generateExpectResourceCollectorsForCommonMain SKIPPED
+> Task :web:kmpPartiallyResolvedDependenciesChecker
+> Task :web:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :web:generateResourceAccessorsForCommonMain
+> Task :web:generateResourceAccessorsForJsMain NO-SOURCE
+> Task :web:generateResourceAccessorsForWebMain NO-SOURCE
+> Task :web:generateActualResourceCollectorsForJsMain
+> Task :web:generateBuildInfo
+> Task :web:generateComposeResClass
+> Task :web:generateExpectResourceCollectorsForCommonMain
+> Task :kotlinWasmKotlinNpmCachesSetup
+> Task :kotlinWasmNodeJsSetup
+> Task :kotlinWasmRestoreYarnLock SKIPPED
+> Task :kotlinWasmYarnSetup
+> Task :engine:wasmJsPackageJson
+> Task :engine:wasmJsTestPackageJson
+> Task :ui:wasmJsPackageJson
+> Task :ui:wasmJsTestPackageJson
+> Task :web:wasmJsPackageJson
+> Task :web:wasmJsTestPackageJson
+> Task :engine:wasmJsPublicPackageJson
+> Task :engine:wasmJsTestPublicPackageJson
+> Task :ui:wasmJsPublicPackageJson
+> Task :ui:wasmJsTestPublicPackageJson
+> Task :web:wasmJsPublicPackageJson
+> Task :web:wasmJsTestPublicPackageJson
+> Task :kotlinWasmPackageJsonUmbrella
+> Task :wasmRootPackageJson
+
+> Task :kotlinWasmNpmInstall
+(node:2720) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning Ignored scripts due to flag.
+
+> Task :kotlinWasmStoreYarnLock
+
+> Task :kotlinWasmToolingSetup
+(node:2733) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+> Task :engine:compileKotlinJs
+
+> Task :kotlinWasmToolingSetup
+warning Ignored scripts due to flag.
+
+> Task :ui:convertXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :ui:copyNonXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :ui:prepareComposeResourcesTaskForWasmJsMain NO-SOURCE
+> Task :ui:assembleWasmJsMainResources
+> Task :ui:wasmJsCopyHierarchicalMultiplatformResources
+> Task :ui:wasmJsZipMultiplatformResourcesForPublication
+> Task :web:wasmJsResolveResourcesFromDependencies
+> Task :web:convertXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :web:copyNonXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :web:prepareComposeResourcesTaskForWasmJsMain NO-SOURCE
+> Task :web:assembleWasmJsMainResources
+> Task :web:wasmJsResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :web:wasmJsAggregateResources
+> Task :web:wasmJsProcessResources
+> Task :ui:generateResourceAccessorsForWasmJsMain SKIPPED
+> Task :ui:generateActualResourceCollectorsForWasmJsMain SKIPPED
+> Task :web:generateResourceAccessorsForWasmJsMain NO-SOURCE
+> Task :web:generateActualResourceCollectorsForWasmJsMain
+> Task :web:kotlinWasmBinaryenSetup
+> Task :web:processSkikoRuntimeForKWasm
+> Task :engine:compileKotlinWasmJs
+> Task :ui:compileKotlinJs
+> Task :web:compileKotlinJs
+> Task :web:jsMainClasses
+
+> Task :ui:compileKotlinWasmJs
+w: file:///home/runner/work/river-runner/river-runner/ui/src/wasmJsMain/kotlin/com/riverrunner/Platform.wasmJs.kt:11:49 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+
+> Task :web:compileKotlinWasmJs
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Browser.wasmJs.kt:5:48 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Browser.wasmJs.kt:6:59 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Browser.wasmJs.kt:7:48 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Browser.wasmJs.kt:8:36 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Browser.wasmJs.kt:10:5 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Main.kt:8:40 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+w: file:///home/runner/work/river-runner/river-runner/web/src/wasmJsMain/kotlin/com/riverrunner/web/Main.kt:11:31 This declaration needs opt-in. Its usage should be marked with '@kotlin.js.ExperimentalWasmJsInterop' or '@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)'
+
+> Task :web:wasmJsMainClasses
+> Task :web:compileProductionExecutableKotlinJs
+> Task :web:compileProductionExecutableKotlinWasmJs
+> Task :web:compileProductionExecutableKotlinWasmJsOptimize
+> Task :web:jsProductionExecutableCompileSync
+> Task :web:jsBrowserProductionWebpack
+asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  riverRunner.js (4.13 MiB)
+  bccfa839aa4b38489c76.wasm (8.02 MiB)
+entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (4.13 MiB)
+      riverRunner.js
+webpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/
+asset bccfa839aa4b38489c76.wasm 8.02 MiB [emitted] [immutable] [from: kotlin/skiko.wasm] [big] (auxiliary name: main)
+asset riverRunner.js 4.13 MiB [emitted] [minimized] [big] (name: main) 1 related asset
+runtime modules 2.3 KiB 6 modules
+modules with warnings 13.3 MiB [true warnings]
+  ./kotlin/river-runner-web.js 59.3 KiB [built] [code generated] [12 warnings]
+  ./kotlin/kotlin-kotlin-stdlib.js 601 KiB [built] [code generated] [162 warnings]
+  ./kotlin/components-resources-library.js 72.3 KiB [built] [code generated] [25 warnings]
+  ./kotlin/kotlinx-coroutines-core.js 491 KiB [built] [code generated] [109 warnings]
+  ./kotlin/androidx-compose-runtime-runtime.js 1.25 MiB [built] [code generated] [139 warnings]
+  ./kotlin/compose-multiplatform-core-compose-ui-ui-text.js 610 KiB [built] [code generated] [121 warnings]
+  ./kotlin/compose-multiplatform-core-compose-ui-ui-unit.js 77.5 KiB [built] [code generated] [19 warnings]
+  ./kotlin/compose-multiplatform-core-compose-foundation-foundation.js 2.28 MiB [built] [code generated] [354 warnings]
+  + 24 modules
+modules by path ./kotlin/*.mjs 727 KiB
+  ./kotlin/skiko.mjs 613 KiB [built] [code generated]
+  ./kotlin/js-reexport-symbols.mjs 113 KiB [built] [code generated]
+./kotlin/skiko.wasm 8.02 MiB (asset) 42 bytes (javascript) [built] [code generated]
+webpack 5.100.2 compiled with 3 warnings in 45721 ms
+
+> Task :web:jsBrowserDistribution
+> Task :web:wasmJsProductionExecutableCompileSync
+
+> Task :web:wasmJsBrowserProductionWebpack
+asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  riverRunner.js (576 KiB)
+  bccfa839aa4b38489c76.wasm (8.02 MiB)
+  a673518b95d44c4fd505.wasm (4.32 MiB)
+entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (576 KiB)
+      riverRunner.js
+webpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/
+asset bccfa839aa4b38489c76.wasm 8.02 MiB [emitted] [immutable] [from: kotlin/skiko.wasm] [big] (auxiliary name: main)
+asset a673518b95d44c4fd505.wasm 4.32 MiB [emitted] [immutable] [from: kotlin/river-runner-web.wasm] [big] (auxiliary name: main)
+asset riverRunner.js 576 KiB [emitted] [minimized] [big] (name: main) 2 related assets
+runtime modules 4.38 KiB 7 modules
+cacheable modules 1.02 MiB (javascript) 12.3 MiB (asset)
+  javascript modules 1.02 MiB
+    ./kotlin/river-runner-web.mjs 361 bytes [built] [code generated]
+    ./kotlin/skiko.mjs 613 KiB [built] [code generated]
+    ../../node_modules/@js-joda/core/dist/js-joda.esm.js 392 KiB [built] [code generated]
+    ./kotlin/river-runner-web.uninstantiated.mjs 35.9 KiB [built] [code generated] [3 warnings]
+  asset modules 12.3 MiB (asset) 84 bytes (javascript)
+    ./kotlin/skiko.wasm 8.02 MiB (asset) 42 bytes (javascript) [built] [code generated]
+    ./kotlin/river-runner-web.wasm 4.32 MiB (asset) 42 bytes (javascript) [built] [code generated]
+webpack 5.100.2 compiled with 3 warnings in 2900 ms
+
+> Task :web:wasmJsBrowserDistribution
+
+> Task :web:composeCompatibilityBrowserDistribution
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sw.js' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sw.js', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sw.js', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/index.html' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/index.html', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/index.html', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/manifest.webmanifest' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/manifest.webmanifest', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/manifest.webmanifest', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_deal.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_deal.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_deal.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_check.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_check.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_check.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_win.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_win.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_win.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_unlock.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_unlock.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_unlock.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_flip.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_flip.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_flip.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_allin.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_allin.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_allin.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_fold.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_fold.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_fold.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_collect.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_collect.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_collect.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_click.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_click.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_click.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_chip.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_chip.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_chip.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_turn.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_turn.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_turn.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/sfx/sfx_blinds.wav' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/sfx/sfx_blinds.wav', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/sfx/sfx_blinds.wav', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/composeResources/com.riverrunner.web.res/font/barlow_condensed_bold.ttf' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/composeResources/com.riverrunner.web.res/font/barlow_condensed_bold.ttf', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/composeResources/com.riverrunner.web.res/font/barlow_condensed_bold.ttf', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/composeResources/com.riverrunner.web.res/font/barlow_condensed_semibold.ttf' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/composeResources/com.riverrunner.web.res/font/barlow_condensed_semibold.ttf', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/composeResources/com.riverrunner.web.res/font/barlow_condensed_semibold.ttf', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/composeResources/com.riverrunner.web.res/font/noto_sans_sc.ttf' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/composeResources/com.riverrunner.web.res/font/noto_sans_sc.ttf', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/composeResources/com.riverrunner.web.res/font/noto_sans_sc.ttf', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/composeResources/com.riverrunner.web.res/font/noto_sans_sc_bold.ttf' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/composeResources/com.riverrunner.web.res/font/noto_sans_sc_bold.ttf', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/composeResources/com.riverrunner.web.res/font/noto_sans_sc_bold.ttf', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/icon-192.png' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/icon-192.png', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/icon-192.png', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/bccfa839aa4b38489c76.wasm' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/bccfa839aa4b38489c76.wasm', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/bccfa839aa4b38489c76.wasm', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/icon-180.png' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/icon-180.png', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/icon-180.png', which has already been copied there.
+file '/home/runner/work/river-runner/river-runner/web/build/dist/wasmJs/productionExecutable/icon-512.png' will be copied to '/home/runner/work/river-runner/river-runner/web/build/dist/composeWebCompatibility/productionExecutable/icon-512.png', overwriting file '/home/runner/work/river-runner/river-runner/web/build/dist/js/productionExecutable/icon-512.png', which has already been copied there.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795507728839.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/river-runner/river-runner/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 3m 29s
+83 actionable tasks: 83 executed

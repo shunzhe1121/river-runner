@@ -1,0 +1,13 @@
+web/build/dist
+web/build/dist/wasmJs
+web/build/dist/wasmJs/productionExecutable
+web/build/dist/wasmJs/productionExecutable/sfx
+web/build/dist/wasmJs/productionExecutable/composeResources
+web/build/dist/js
+web/build/dist/js/productionExecutable
+web/build/dist/js/productionExecutable/sfx
+web/build/dist/js/productionExecutable/composeResources
+web/build/dist/composeWebCompatibility
+web/build/dist/composeWebCompatibility/productionExecutable
+web/build/dist/composeWebCompatibility/productionExecutable/sfx
+web/build/dist/composeWebCompatibility/productionExecutable/composeResources
