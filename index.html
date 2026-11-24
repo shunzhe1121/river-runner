@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="River Runner">
+    <meta name="theme-color" content="#0C1310">
+    <title>River Runner</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <style>
+        /* Pinned page: no scrolling, rubber-banding, zooming, text selection or callouts. On
+           iPhone each of these moved the app so buttons ended up off screen. */
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0C1310;
+                     position: fixed; inset: 0; overscroll-behavior: none; touch-action: none;
+                     -webkit-text-size-adjust: 100%; -webkit-user-select: none; user-select: none;
+                     -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+        #loading { position: fixed; inset: 0; z-index: 1000; background: #0C1310; display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; gap: 10px; padding: 24px; box-sizing: border-box; text-align: center;
+                   color: #9DAAA2; font: 16px -apple-system, "PingFang SC", sans-serif; }
+        #loading b { color: #E6B54F; font-size: 18px; }
+        #diag { font-size: 12px; line-height: 1.6; color: #6f7d75; max-width: 520px; word-break: break-all; }
+        #diag .err { color: #F06A63; }
+        /* The app is laid out for landscape, as on Android: in portrait, ask to turn the phone
+           (under the loading screen, so download progress stays visible while loading). */
+        /* the app draws into this; the overlays below stay outside it, so they can cover it */
+        #app { position: fixed; left: 0; top: 0; width: 100%; height: 100%; touch-action: none; }
+        #rotate { display: none; position: fixed; inset: 0; z-index: 900; background: #0C1310; color: #EEF1EA;
+                  flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center;
+                  font: 17px -apple-system, "PingFang SC", sans-serif; padding: 24px; box-sizing: border-box; }
+        #rotate small { color: #9DAAA2; font-size: 13px; line-height: 1.6; }
+        #rotate .phone { width: 46px; height: 78px; border: 3px solid #E6B54F; border-radius: 9px;
+                         animation: rr-turn 2.4s ease-in-out infinite; }
+        @keyframes rr-turn { 0%, 30% { transform: rotate(0deg); } 60%, 100% { transform: rotate(-90deg); } }
+        /* shown only when turning the phone would help: a portrait window that fills the screen
+           (not split view on an unfolded phone or iPad, not a narrow desktop window; see fit()) */
+        html.rr-rotate #rotate { display: flex; }
+    </style>
+    <script>
+        // Loading diagnostics: elapsed time, files being fetched, and any error, shown on the
+        // loading screen so a failure on a phone can be read off a screenshot.
+        (function () {
+            var t0 = Date.now(), lines = [], last = "";
+            function el(id) { return document.getElementById(id); }
+            function render() {
+                var d = el("diag"), s = el("secs");
+                if (s) s.textContent = Math.round((Date.now() - t0) / 1000);
+                if (d) d.innerHTML = lines.slice(-8).join("<br>") + (last ? "<br>" + last : "");
+            }
+            // The log is also kept in localStorage, so if the browser kills the page (white screen,
+            // reload) the next visit shows where the previous one stopped.
+            var prev = null;
+            try { prev = JSON.parse(localStorage.getItem("rrBootLog") || "null"); } catch (e) {}
+            var saved = [], booted = false, logView = /[?&]log=1/.test(location.search);
+            window.__rrPrevAll = prev;
+            function save(msg) {
+                if (logView) return;
+                saved.push(Math.round((Date.now() - t0) / 1000) + "s " + msg);
+                try { localStorage.setItem("rrBootLog", JSON.stringify({ ready: booted, at: t0, lines: saved.slice(-30) })); } catch (e) {}
+            }
+            window.__rrLog = function (msg, isErr) {
+                lines.push(isErr ? '<span class="err">' + msg + "</span>" : msg); save(msg); render();
+            };
+            window.addEventListener("error", function (e) {
+                var t = e.target;
+                if (t && (t.src || t.href)) __rrLog("加载失败: " + (t.src || t.href).split("/").pop(), true);
+                else __rrLog("错误: " + (e.message || e), true);
+            }, true);
+            window.addEventListener("unhandledrejection", function (e) {
+                __rrLog("错误: " + (e.reason && (e.reason.message || e.reason)), true);
+            });
+            // Report each download with its byte progress. fetch() resolves as soon as the headers
+            // arrive, so the body is counted separately: a slow network then shows up as a slow
+            // download instead of looking like a slow Wasm compile.
+            var downloads = {};
+            function kb(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.round(n / 1024) + " KB"; }
+            function progressLine() {
+                var parts = [];
+                for (var k in downloads) {
+                    var d = downloads[k];
+                    if (!d.done) parts.push(k.slice(0, 10) + " " + kb(d.got) + (d.total ? " / " + kb(d.total) : ""));
+                }
+                last = parts.length ? "正在下载 " + parts.join("，") : "";
+            }
+            var origFetch = window.fetch;
+            window.fetch = function (input) {
+                var url = (typeof input === "string" ? input : (input && input.url) || "").split("?")[0].split("/").pop();
+                var started = Date.now();
+                return origFetch.apply(this, arguments).then(function (r) {
+                    if (!r.ok) { __rrLog(url + " " + r.status, true); return r; }
+                    var total = +(r.headers.get("content-length") || 0);
+                    var enc = r.headers.get("content-encoding");
+                    if (!r.body || typeof ReadableStream !== "function") {
+                        __rrLog(url + " 开始下载" + (total ? "（" + kb(total) + "）" : ""));
+                        return r;
+                    }
+                    var d = downloads[url] = { got: 0, total: total, done: false };
+                    var reader = r.body.getReader();
+                    var counted = new ReadableStream({
+                        pull: function (ctl) {
+                            return reader.read().then(function (x) {
+                                if (x.done) {
+                                    d.done = true; progressLine();
+                                    __rrLog(url.slice(0, 16) + " 下载完成 " + kb(d.got) + (enc ? "（" + enc + " 压缩）" : "") +
+                                        "，用时 " + ((Date.now() - started) / 1000).toFixed(1) + " 秒");
+                                    ctl.close(); return;
+                                }
+                                d.got += x.value.byteLength; progressLine(); render();
+                                ctl.enqueue(x.value);
+                            }, function (err) { __rrLog("下载中断 " + url + ": " + err, true); ctl.error(err); });
+                        }
+                    });
+                    return new Response(counted, { status: r.status, statusText: r.statusText, headers: r.headers });
+                }, function (err) { __rrLog("下载失败 " + url + ": " + err, true); throw err; });
+            };
+            var timer = setInterval(function () {
+                if (!el("loading")) { clearInterval(timer); return; }
+                render();
+                if (Date.now() - t0 > 20000 && el("slow")) el("slow").style.display = "block";
+            }, 500);
+            // ?js=1 forces the JS build (as if the browser had no WasmGC), to compare the two builds
+            // Safari (every browser on iPhone is Safari underneath) kills the page a few seconds after
+            // the first frame with the Wasm build, while the JS build runs, so WebKit gets the JS build.
+            // ?wasm=1 tries the Wasm build anyway (to recheck after a Compose or Safari update).
+            var ua0 = navigator.userAgent;
+            var webkit = /iPhone|iPad|iPod/.test(ua0) || (/Safari\//.test(ua0) && !/Chrome|Chromium|CriOS|Android/.test(ua0)) ||
+                (/Macintosh/.test(ua0) && navigator.maxTouchPoints > 1);
+            var forceJs = /[?&]js=1/.test(location.search) || (webkit && !/[?&]wasm=1/.test(location.search));
+            if (forceJs && typeof WebAssembly === "object") {
+                WebAssembly.validate = function () { return false; };
+                __rrLog(webkit ? "Safari 内核，使用 JS 版" : "已强制使用 JS 版");
+            }
+            var origError = console.error;
+            console.error = function () {
+                __rrLog("控制台错误: " + Array.prototype.map.call(arguments, String).join(" ").slice(0, 200), true);
+                return origError.apply(console, arguments);
+            };
+            // report WebAssembly compiles: a large module can take very long in some in-app browsers
+            if (typeof WebAssembly === "object") {
+                ["instantiateStreaming", "compileStreaming", "instantiate", "compile"].forEach(function (fn) {
+                    var orig = WebAssembly[fn];
+                    if (!orig) return;
+                    WebAssembly[fn] = function () {
+                        var started = Date.now(), n = ++window.__rrWasmCount;
+                        __rrLog("编译 Wasm #" + n + "（" + fn + "）开始");
+                        return orig.apply(WebAssembly, arguments).then(function (r) {
+                            __rrLog("编译 Wasm #" + n + " 完成（" + ((Date.now() - started) / 1000).toFixed(1) + " 秒）");
+                            return r;
+                        }, function (err) { __rrLog("编译 Wasm #" + n + " 失败: " + err, true); throw err; });
+                    };
+                });
+                window.__rrWasmCount = 0;
+            }
+            // the app calls this after its first frame
+            window.__rrReady = function () {
+                booted = true;
+                __rrLog("第一帧已绘制");
+                // After the first frame: what was drawn into, and a heartbeat for 15 s. If the log
+                // stops partway, the browser killed the page; if it runs to the end, the page lived
+                // and the white screen is a display problem.
+                try {
+                    // Compose draws into a canvas inside a shadow root
+                    var cs = Array.prototype.slice.call(document.querySelectorAll("canvas")), info = [];
+                    Array.prototype.forEach.call(document.querySelectorAll("*"), function (n) {
+                        if (n.shadowRoot) cs = cs.concat(Array.prototype.slice.call(n.shadowRoot.querySelectorAll("canvas")));
+                    });
+                    for (var i = 0; i < cs.length; i++) {
+                        var r = cs[i].getBoundingClientRect();
+                        info.push(cs[i].width + "x" + cs[i].height + " 显示 " + Math.round(r.width) + "x" + Math.round(r.height));
+                    }
+                    __rrLog("画布 " + cs.length + " 个: " + info.join("; ") + "，屏幕倍率 " + devicePixelRatio);
+                    var gl = document.createElement("canvas").getContext("webgl2");
+                    __rrLog("WebGL2: " + (gl ? "支持，最大纹理 " + gl.getParameter(gl.MAX_TEXTURE_SIZE) : "不支持"));
+                    var top = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+                    __rrLog("屏幕中央的元素: " + (top ? top.tagName + (top.id ? "#" + top.id : "") : "无"));
+                } catch (e) { __rrLog("检查画布出错: " + e, true); }
+                var beats = 0, hb = setInterval(function () {
+                    beats++;
+                    if (beats % 3 === 0 || beats === 1) __rrLog("页面仍在运行 " + beats + " 秒");
+                    if (beats >= 15) { clearInterval(hb); __rrLog("检查结束，页面一直在运行"); }
+                }, 1000);
+                addEventListener("pagehide", function () { __rrLog("页面被关闭或隐藏"); });
+                // Offline cache: after the first frame, so it never competes with the first download.
+                if ("serviceWorker" in navigator && location.protocol !== "file:") {
+                    navigator.serviceWorker.register("sw.js").then(function (reg) {
+                        __rrLog(navigator.serviceWorker.controller ? "离线缓存已启用" : "离线缓存安装中，下次打开起可离线使用");
+                        // hand over the files this visit already downloaded
+                        var urls = [location.href].concat(performance.getEntriesByType("resource").map(function (e) { return e.name; }));
+                        var send = function (w) { if (w) w.postMessage({ type: "cache", urls: urls }); };
+                        var w = reg.installing || reg.waiting || reg.active;
+                        if (reg.active) send(reg.active);
+                        else if (w) w.addEventListener("statechange", function () { if (w.state === "activated") send(w); });
+                    }, function (e) { __rrLog("离线缓存不可用: " + e, true); });
+                }
+                var l = el("loading"); if (l) l.remove();
+            };
+            var ua = navigator.userAgent.match(/(iPhone OS [\d_]+|Android [\d.]+|Version\/[\d.]+|Chrome\/\d+|MicroMessenger\/[\d.]+|discover\/[\d.]+|Safari\/[\d.]+)/g);
+            __rrLog((ua || []).join(" ") + (navigator.deviceMemory ? "，内存 " + navigator.deviceMemory + " GB" : ""));
+            __rrLog("WebAssembly: " + (typeof WebAssembly === "object" ? "支持" : "不支持"));
+            if (prev && !prev.ready && prev.lines && prev.lines.length) {
+                lines.push('<span class="err">上次打开没有完成，停在：' + prev.lines[prev.lines.length - 1] + "</span>");
+                window.__rrPrev = prev;
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div id="app"></div>
+    <div id="safe" style="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
+    <script>
+        // Keep the app exactly inside the part of the screen you can see. Safari's toolbars come
+        // and go, and the page can be scrolled or zoomed by a stray gesture; the visual viewport
+        // is the visible rectangle, so the app follows it, and scroll and zoom are put back.
+        (function () {
+            var app = document.getElementById("app");
+            var vv = window.visualViewport;
+            function fit() {
+                if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+                if (vv && vv.scale > 1.01) {
+                    // a zoom slipped through: setting the viewport again resets it
+                    var m = document.querySelector('meta[name="viewport"]');
+                    m.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no");
+                    setTimeout(function () { m.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"); }, 50);
+                }
+                // From the home screen the whole screen is ours; in a Safari tab, the part between its toolbars.
+                var standalone = navigator.standalone === true ||
+                    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+                var x = 0, y = 0, w = window.innerWidth, h = window.innerHeight;
+                if (!standalone && vv) { x = vv.offsetLeft; y = vv.offsetTop; w = vv.width; h = vv.height; }
+                // The page covers the whole screen (viewport-fit=cover). iOS reserves wide margins for
+                // the notch / Dynamic Island and the home indicator; the app only keeps clear of what
+                // would really cover it: up to 50 px on the side with the camera (the island ends
+                // about 48 px from the edge), the top in portrait, and nothing for the home indicator,
+                // which is a thin line drawn over the app.
+                var cs = getComputedStyle(document.getElementById("safe"));
+                var inset = function (side) { return parseFloat(cs["padding" + side]) || 0; };
+                var l = Math.min(inset("Left"), 50), r = Math.min(inset("Right"), 50), t = inset("Top");
+                app.style.left = Math.round(x + l) + "px";
+                app.style.top = Math.round(y + t) + "px";
+                app.style.width = Math.max(0, Math.round(w - l - r)) + "px";
+                app.style.height = Math.max(0, Math.round(h - t)) + "px";
+                // Ask to turn the phone only when the window is portrait and fills (nearly) the
+                // whole screen. In split view a tall narrow window is normal and turning the device
+                // does not change it, so the app is shown as a landscape strip instead (WebApp.kt).
+                var sShort = Math.min(screen.width, screen.height), sLong = Math.max(screen.width, screen.height);
+                var fullScreen = window.innerWidth >= sShort * 0.9 && window.innerHeight >= sLong * 0.7;
+                var touch = navigator.maxTouchPoints > 0;
+                document.documentElement.classList.toggle("rr-rotate", touch && fullScreen && window.innerHeight > window.innerWidth);
+            }
+            if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
+            window.addEventListener("resize", fit);
+            window.addEventListener("orientationchange", function () { fit(); setTimeout(fit, 300); setTimeout(fit, 800); });
+            // Safari's own pinch and double-tap zoom
+            ["gesturestart", "gesturechange", "gestureend"].forEach(function (t) {
+                document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false });
+            });
+            document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
+            fit();
+        })();
+    </script>
+    <div id="rotate">
+        <div class="phone"></div>
+        <div>请把手机横过来使用</div>
+        <small>Turn your phone sideways<br>如果转不过来，请在控制中心关闭“竖排方向锁定”</small>
+    </div>
+    <div id="loading">
+        <b>River Runner 加载中…</b>
+        <div>已等待 <span id="secs">0</span> 秒，第一次打开需要下载约 5 MB，之后可以离线使用</div>
+        <div id="slow" style="display:none">加载较慢，可能是网络连不上 GitHub，可以换个网络或稍后再试</div>
+        <div id="diag"></div>
+    </div>
+    <!-- after the body exists: the app attaches to it -->
+    <script>
+        // ?log=1 shows the full log of the previous visit and does not start the app,
+        // so a white screen can still be explained afterwards.
+        if (/[?&]log=1/.test(location.search)) {
+            var p = window.__rrPrevAll;
+            document.getElementById("slow").style.display = "none";
+            document.getElementById("loading").children[1].textContent =
+                p ? (p.ready ? "上次已经画出第一帧（之后白屏说明是画面显示的问题）" : "上次没有画出第一帧（页面中途停止或被关闭）") : "没有记录";
+            document.getElementById("diag").style.display = "none";
+            var pl = document.createElement("div");
+            pl.style.cssText = "font-size:13px;line-height:1.7;color:#9DAAA2;max-width:520px;word-break:break-all";
+            // newest first, and the screen scrolls, so the end of the log is never cut off
+            pl.innerHTML = p ? p.lines.slice().reverse().join("<br>") : "";
+            var lo = document.getElementById("loading");
+            lo.style.justifyContent = "flex-start"; lo.style.overflowY = "auto"; lo.style.paddingTop = "60px";
+            document.querySelector("#loading b").textContent = "上次打开的记录（最新的在最上面）";
+            document.getElementById("loading").appendChild(pl);
+            window.__rrLog = function () {};
+        } else {
+            var sc = document.createElement("script");
+            sc.src = "riverRunner.js";
+            sc.onload = function () { __rrLog("启动脚本已加载"); };
+            document.body.appendChild(sc);
+        }
+    </script>
+</body>
+</html>
